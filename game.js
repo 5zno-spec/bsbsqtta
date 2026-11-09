@@ -198,6 +198,7 @@ function render() {
   paintDecor();
   layer.innerHTML = ''; panel.innerHTML = '';
   if (mode !== 'farm') { $('#plots').innerHTML = ''; $('#bubbles').innerHTML = ''; }
+  if (mode !== 'bath') { const a = $('#actor'); a.style.left = ''; a.style.bottom = ''; }
 
   if (mode === 'farm') {
     paintPlots();
@@ -403,6 +404,17 @@ document.querySelectorAll('.nav button').forEach(b => {
 $('#stage').addEventListener('pointermove', e => {
   const r = $('#stage').getBoundingClientRect();
   $('#tiger').style.setProperty('--tilt', (((e.clientX - r.left) / r.width - 0.5) * 8).toFixed(1) + 'deg');
+});
+// في الحمام: يمشي النمر إلى أي مكان يضغط عليه اللاعب
+let walkTimer;
+$('#stage').addEventListener('click', e => {
+  if (mode !== 'bath' || S.sleeping || e.target.closest('#tiger, button')) return;
+  const r = $('#layer').getBoundingClientRect(), a = $('#actor');
+  const half = a.offsetWidth / 2 / r.width * 100;
+  const x = Math.max(half, Math.min(100 - half, (e.clientX - r.left) / r.width * 100));
+  const y = Math.max(-3, Math.min(22, (1 - (e.clientY - r.top) / r.height) * 100 - 6));
+  a.style.left = x.toFixed(1) + '%'; a.style.bottom = y.toFixed(1) + '%';
+  a.classList.add('walk'); clearTimeout(walkTimer); walkTimer = setTimeout(() => a.classList.remove('walk'), 520);
 });
 // القفز فقط عند الضغط على البطن
 $('#tiger').addEventListener('click', e => {

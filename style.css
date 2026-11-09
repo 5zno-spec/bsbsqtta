@@ -151,7 +151,7 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 .stage.night .lid{animation:none;transform:translateY(0)}
 
 /* المزرعة: النمر ثابت على اليمين، والحفر على الأرض */
-.actor{transition:left .5s ease}
+.actor{transition:left .5s ease,bottom .5s ease}
 .spot{position:absolute;top:93%;transform:translate(-50%,-100%);width:54px;border:0;background:none;padding:0;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;font-family:inherit}
 .spot em{font-style:normal;line-height:1;height:3rem;display:flex;align-items:flex-end;font-size:1.5rem;margin-bottom:-9px;
