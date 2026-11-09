@@ -59,12 +59,13 @@ function praise() {
   let i; do { i = Math.floor(Math.random() * PRAISE.length); } while (i === lastPraise);
   lastPraise = i;
   const e = document.createElement('div');
-  e.className = 'praise'; e.textContent = PRAISE[i];
+  e.className = 'praise'; e.textContent = PRAISE[i]; SFX.praise();
   $('#actor').appendChild(e); setTimeout(() => e.remove(), 1800);
 }
 function eat() {
   const t = $('#tiger');
   t.classList.remove('eating'); void t.offsetWidth; t.classList.add('eating');
+  SFX.crunch(0.6); setTimeout(SFX.yum, 1500);
   setTimeout(() => anim('chew'), 600);
   setTimeout(() => hearts(3), 1500);
   setTimeout(() => t.classList.remove('eating'), 2100);
@@ -81,6 +82,7 @@ const BIN = '<svg viewBox="0 0 64 76" aria-hidden="true"><g class="lid"><rect x=
 
 // تفتح سلة قمامة بجانب العنصر ويدخل فيها ثم تُغلق وتختفي
 function toBin(d) {
+  SFX.bin();
   const fxl = $('#fx'), W = fxl.clientWidth, H = fxl.clientHeight;
   const below = d.y < 55, bx = d.x / 100 * W, by = (d.y + (below ? 15 : -15)) / 100 * H;
   const bin = document.createElement('div');
@@ -105,6 +107,26 @@ function toBin(d) {
   setTimeout(() => fx('✨', 'poof', d.x, d.y + (below ? 15 : -15)), 1000);
   setTimeout(praise, 950);
   setTimeout(() => { bin.remove(); it.remove(); }, 1450);
+}
+
+// القمامة تتوزع على أرضية البيت (تحت خط الأفق عند 62% من المشهد) بتباعد متساوٍ تقريبًا
+const FLOOR = { x0: 8, x1: 92, y0: 68, y1: 90 };
+function floorSpot(others) {
+  const L = $('#layer'), W = L.clientWidth || 360, H = L.clientHeight || 640;
+  let best = { x: 50, y: 80 }, bd = -1;
+  for (let i = 0; i < 60; i++) {
+    const x = FLOOR.x0 + Math.random() * (FLOOR.x1 - FLOOR.x0), y = FLOOR.y0 + Math.random() * (FLOOR.y1 - FLOOR.y0);
+    let d = Infinity;
+    for (const o of others) d = Math.min(d, Math.hypot((x - o.x) * W / 100, (y - o.y) * H / 100));
+    if (d > bd) { bd = d; best = { x, y }; }
+  }
+  return best;
+}
+// قمامة محفوظة من نسخة سابقة كانت في الهواء: تنزل إلى الأرض بين الباقي
+function layoutDirt() {
+  const onFloor = d => d.x >= FLOOR.x0 - 1 && d.x <= FLOOR.x1 + 1 && d.y >= FLOOR.y0 - 1 && d.y <= FLOOR.y1 + 1;
+  const placed = S.dirt.filter(onFloor);
+  S.dirt.filter(d => !onFloor(d)).forEach(d => { const p = floorSpot(placed); d.x = p.x; d.y = p.y; placed.push(d); });
 }
 
 let decorKey = '';
@@ -154,11 +176,11 @@ function showTip(btn) {
 }
 document.addEventListener('pointerdown', e => {
   const b = e.target.closest('.nav button, .act');
-  if (b) showTip(b);
+  if (b) { showTip(b); if (b.closest('.nav')) SFX.nav(); else SFX.tap(); }
 });
 
 function setMode(m) {
-  if (S.sleeping && m !== 'sleep') { S.sleeping = false; say('استيقظ النمر'); }
+  if (S.sleeping && m !== 'sleep') { S.sleeping = false; say('استيقظ النمر'); SFX.wake(); }
   mode = m;
   document.querySelectorAll('.nav button').forEach(b =>
     b.setAttribute('aria-current', b.dataset.mode === m));
@@ -204,7 +226,8 @@ function render() {
       e.setAttribute('aria-label', JUNK_NAMES[d.k]);
       e.style.left = d.x + '%'; e.style.top = d.y + '%';
       e.onclick = () => {
-        toBin(d);
+        SFX.grab(); toBin(d);
+        if (S.dirt.length === 1) setTimeout(SFX.done, 1500);
         S.dirt.splice(i, 1); save(); paintStats(); render();
         say(S.dirt.length ? 'أحسنت، تابع.' : 'البيت نظيف!');
       };
@@ -220,7 +243,7 @@ function render() {
     b.className = 'act';
     setAct(b, S.sleeping ? '☀️' : '🌙', S.sleeping ? 'أيقظه' : 'أطفئ الضوء ونام');
     b.onclick = () => {
-      S.sleeping = !S.sleeping;
+      S.sleeping = !S.sleeping; if (S.sleeping) SFX.sleep(); else SFX.wake();
       say(S.sleeping ? 'نام النمر…' : 'استيقظ النمر');
       save(); render();
     };
@@ -296,7 +319,7 @@ function popBubble(b) {
   const sr = $('#fx').getBoundingClientRect(), r = b.getBoundingClientRect();
   const x = (r.left + r.width / 2 - sr.left) / sr.width * 100;
   const y = (r.top + r.height / 2 - sr.top) / sr.height * 100;
-  const kind = b.dataset.kind; b.remove(); fx('🫧', 'poof', x, y);
+  const kind = b.dataset.kind; b.remove(); fx('🫧', 'poof', x, y); SFX.pop();
   if (kind !== 'water') { say('هذه صابونة للاستحمام. اختر الرشاش 🚿'); return; }
   const i = S.plots.findIndex(p => p.s === 1);
   if (i < 0) { say('لا توجد بذرة تحتاج إلى سقي.'); return; }
@@ -308,7 +331,7 @@ function water(i) {
   w.className = 'water'; w.style.left = PLOT_X[i] + '%'; w.style.top = '66%';
   w.innerHTML = '<span>🚿</span><b style="left:-4px">💧</b><b style="left:12px;animation-delay:.15s">💧</b><b style="left:28px;animation-delay:.3s">💧</b>';
   $('#fx').appendChild(w); setTimeout(() => w.remove(), 1500);
-  p.s = 2; p.t = Date.now() + GROW_MS;
+  SFX.water(); p.s = 2; p.t = Date.now() + GROW_MS;
   if (!needWater()) $('#bubbles').innerHTML = '';
   say('سقيت البذرة فصارت نبتة! انتظر لتنمو.'); praise();
   save(); render();
@@ -316,8 +339,8 @@ function water(i) {
 
 function plantSeed() {
   const i = S.plots.findIndex(p => p.s === 0);
-  if (i < 0) { say('كل الأرض مزروعة. اسقِ البذور أو احصد الجزر.'); return; }
-  S.plots[i] = { s: 1, t: 0 };
+  if (i < 0) { say('كل الأرض مزروعة. اسقِ البذور أو احصد الجزر.'); SFX.no(); return; }
+  S.plots[i] = { s: 1, t: 0 }; SFX.seed();
   say('وقعت البذرة على الأرض.'); praise();
   save(); render();
   setTimeout(ensureBubbles, 600);
@@ -328,7 +351,7 @@ function plotAction(i) {
   if (p.s === 0) { plantSeed(); return; }
   if (p.s === 1) { say('تحتاج ماء. اضغط على الرشاش 🚿 داخل الفقاعات.'); ensureBubbles(); return; }
   if (p.s === 2) { say('ما زالت تنمو.'); return; }
-  p.s = 0; S.veg++; fx('✨', 'poof', PLOT_X[i], 78);
+  p.s = 0; S.veg++; SFX.harvest(); fx('✨', 'poof', PLOT_X[i], 78);
   say('حصدت جزرة!'); praise(); save(); render();
 }
 
@@ -343,7 +366,7 @@ function feed() {
 function scrub() {
   const was = S.hygiene;
   S.hygiene = clamp(S.hygiene + 8);
-  if (was < 100 && S.hygiene >= 100) praise(); anim('wiggle');
+  SFX.scrub(); if (was < 100 && S.hygiene >= 100) praise(); anim('wiggle');
   for (let i = 0; i < 4; i++) fx('🫧', 'foam', 25 + Math.random() * 50, 30 + Math.random() * 30);
   say(S.hygiene >= 100 ? 'النمر نظيف ولامع!' : 'استمر في الفرك.');
   save(); paintStats();
@@ -356,9 +379,10 @@ function tick() {
   S.energy = clamp(S.energy + (sl ? 2 : -0.2));
   let redraw = false;
 
-  if (sl && S.energy >= 100) { S.sleeping = false; say('صباح الخير! النمر مليء بالطاقة.'); redraw = true; }
+  if (sl && S.energy >= 100) { S.sleeping = false; say('صباح الخير! النمر مليء بالطاقة.'); SFX.wake(); redraw = true; }
   if (!sl && Math.random() < 0.08 && S.dirt.length < 8) {
-    S.dirt.push({ x: 8 + Math.random() * 84, y: 20 + Math.random() * 55, k: Math.floor(Math.random() * JUNK.length) });
+    const p = floorSpot(S.dirt);
+    S.dirt.push({ x: p.x, y: p.y, k: Math.floor(Math.random() * JUNK.length) });
     if (mode === 'clean') redraw = true;
   }
   S.plots.forEach(p => { if (p.s === 2 && Date.now() >= p.t) p.s = 3; });
@@ -381,8 +405,13 @@ $('#tiger').addEventListener('click', e => {
   const r = e.currentTarget.getBoundingClientRect();
   const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
   if (x < 0.34 || x > 0.66 || y < 0.48 || y > 0.84) return;
-  hop(); hearts(2);
+  hop(); hearts(2); SFX.boing();
 });
+const sndBtn = $('#snd');
+const paintSnd = () => { sndBtn.textContent = SFX.on ? '🔊' : '🔇'; sndBtn.setAttribute('aria-pressed', SFX.on); sndBtn.setAttribute('aria-label', SFX.on ? 'إيقاف الصوت' : 'تشغيل الصوت'); };
+sndBtn.onclick = () => { SFX.set(!SFX.on); paintSnd(); };
+paintSnd();
+layoutDirt();
 setMode(mode);
 paintStats();
 setInterval(tick, 1000);
