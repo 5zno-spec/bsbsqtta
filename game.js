@@ -15,11 +15,15 @@ const GROW_MS = 15000;
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
 const room = () => clamp(100 - S.dirt.length * 12);
 
+// عند الاستيقاظ أول ما يريده النمر هو الحمام (حتى تكتمل نظافته)
+function wakeUp() { S.wakeBath = S.hygiene < 100; }
+
 function say(t) { $('#msg').textContent = t; }
 
 // المهمة المطلوبة من اللاعب الآن: صورة فقط في فقاعة تفكير فوق رأس النمر
 function task() {
   if (S.sleeping) return null;
+  if (S.wakeBath && S.hygiene < 100 && mode !== 'bath') return ['🛁', 'النمر يريد الاستحمام'];
   if (mode === 'farm') {
     if (S.plots.some(p => p.s === 3)) return ['🥕', 'احصد الجزر'];
     if (needWater()) return ['🚿', 'اسقِ البذرة'];
@@ -180,7 +184,7 @@ document.addEventListener('pointerdown', e => {
 });
 
 function setMode(m) {
-  if (S.sleeping && m !== 'sleep') { S.sleeping = false; say('استيقظ النمر'); SFX.wake(); }
+  if (S.sleeping && m !== 'sleep') { S.sleeping = false; say('استيقظ النمر'); SFX.wake(); wakeUp(); }
   mode = m;
   document.querySelectorAll('.nav button').forEach(b =>
     b.setAttribute('aria-current', b.dataset.mode === m));
@@ -243,7 +247,7 @@ function render() {
     b.className = 'act';
     setAct(b, S.sleeping ? '☀️' : '🌙', S.sleeping ? 'أيقظه' : 'أطفئ الضوء ونام');
     b.onclick = () => {
-      S.sleeping = !S.sleeping; if (S.sleeping) SFX.sleep(); else SFX.wake();
+      S.sleeping = !S.sleeping; if (S.sleeping) { SFX.sleep(); S.wakeBath = false; } else { SFX.wake(); wakeUp(); }
       say(S.sleeping ? 'نام النمر…' : 'استيقظ النمر');
       save(); render();
     };
@@ -366,7 +370,7 @@ function feed() {
 function scrub() {
   const was = S.hygiene;
   S.hygiene = clamp(S.hygiene + 8);
-  SFX.scrub(); if (was < 100 && S.hygiene >= 100) praise(); anim('wiggle');
+  SFX.scrub(); if (was < 100 && S.hygiene >= 100) praise(); if (S.hygiene >= 100) S.wakeBath = false; anim('wiggle');
   for (let i = 0; i < 4; i++) fx('🫧', 'foam', 25 + Math.random() * 50, 30 + Math.random() * 30);
   say(S.hygiene >= 100 ? 'النمر نظيف ولامع!' : 'استمر في الفرك.');
   save(); paintStats();
@@ -379,7 +383,7 @@ function tick() {
   S.energy = clamp(S.energy + (sl ? 2 : -0.2));
   let redraw = false;
 
-  if (sl && S.energy >= 100) { S.sleeping = false; say('صباح الخير! النمر مليء بالطاقة.'); SFX.wake(); redraw = true; }
+  if (sl && S.energy >= 100) { S.sleeping = false; say('صباح الخير! النمر مليء بالطاقة.'); SFX.wake(); wakeUp(); redraw = true; }
   if (!sl && Math.random() < 0.08 && S.dirt.length < 8) {
     const p = floorSpot(S.dirt);
     S.dirt.push({ x: p.x, y: p.y, k: Math.floor(Math.random() * JUNK.length) });
