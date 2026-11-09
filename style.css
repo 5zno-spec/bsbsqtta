@@ -261,7 +261,7 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 
 /* الحمام: الأرضية تمتد حتى أسفل الشاشة، والنمر يقف عليها */
 /* صورة الحمام أكبر من الشاشة (150% من العرض على الأقل): تُسحب أفقيًا لإظهار بقيتها، و--bx موضعها */
-.stage[data-mode=bath]{touch-action:none; cursor:grab;
+.stage[data-mode=bath]{touch-action:none; cursor:grab; transition:none; /* بلا انتقال: وإلا يتأخر موضع الخلفية خلف الإصبع */
   background:url("bg/bath.jpg") var(--bx,50%) bottom / max(150%,118vh) auto no-repeat,#e2b284;
   background:url("bg/bath.jpg") var(--bx,50%) bottom / max(150%,118dvh) auto no-repeat,#e2b284}
 .stage[data-mode=bath].panning{cursor:grabbing}
