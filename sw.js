@@ -1,6 +1,6 @@
 // خدمة العمل بلا إنترنت: تخزّن ملفات اللعبة وتفتحها من الذاكرة
 // عند تعديل أي ملف ارفع رقم الإصدار هنا ليصل التحديث للاعبين
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = 'nomor-alnashit-' + VERSION;
 const FONTS = 'nomor-alnashit-fonts';
 const CORE = [

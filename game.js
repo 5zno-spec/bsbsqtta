@@ -17,15 +17,15 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 const room = () => clamp(100 - S.dirt.length * 12);
 
 // عند الاستيقاظ أول ما يريده النمر هو الحمام (حتى تكتمل نظافته)
-function wakeUp() { S.wakeBath = S.hygiene < 100; }
+function wakeUp() { S.wakeBath = S.hygiene < 100; S.toilet = 100; S.sleepReady = false; }
 
 function say(t) { $('#msg').textContent = t; }
 
 // المهمة المطلوبة من اللاعب الآن: صورة فقط في فقاعة تفكير فوق رأس النمر
 function task() {
   if (S.sleeping) return null;
-  if (S.wakeBath && S.hygiene < 100 && mode !== 'bath') return ['🛁', 'النمر يريد الاستحمام'];
   if (mode !== 'bath' && S.toilet >= 80) return ['🚽', 'النمر يريد المرحاض'];
+  if (S.wakeBath && S.hygiene < 100 && mode !== 'bath') return ['🛁', 'النمر يريد الاستحمام'];
   if (mode === 'farm') {
     if (S.plots.some(p => p.s === 3)) return ['🥕', 'احصد الجزر'];
     if (needWater()) return ['🚿', 'اسقِ البذرة'];
@@ -42,7 +42,7 @@ function task() {
     return S.lather >= 50 ? ['🚿', 'اشطفه بالماء'] : ['🧼', 'افرك بالصابون'];
   }
   if (mode === 'clean') return S.dirt.length ? ['🗑️', 'ارمِ القمامة في السلة'] : ['✨', 'البيت نظيف'];
-  if (mode === 'sleep') return ['🌙', 'أطفئ الضوء لينام'];
+  if (mode === 'sleep') return S.sleepReady ? ['🌙', 'أطفئ الضوء لينام'] : ['🚽', 'يحتاج المرحاض قبل النوم'];
   return null;
 }
 function think() {
@@ -255,7 +255,11 @@ function render() {
     b.className = 'act';
     setAct(b, S.sleeping ? '☀️' : '🌙', S.sleeping ? 'أيقظه' : 'أطفئ الضوء ونام');
     b.onclick = () => {
-      S.sleeping = !S.sleeping; if (S.sleeping) { SFX.sleep(); S.wakeBath = false; } else { SFX.wake(); wakeUp(); }
+      if (!S.sleeping && !S.sleepReady) {
+        S.toilet = Math.max(S.toilet, 85); SFX.no(); say('يحتاج النمر المرحاض قبل النوم 🚽');
+        save(); think(); return;
+      }
+      S.sleeping = !S.sleeping; if (S.sleeping) { SFX.sleep(); S.wakeBath = false; S.sleepReady = false; } else { SFX.wake(); wakeUp(); }
       say(S.sleeping ? 'نام النمر…' : 'استيقظ النمر');
       save(); render();
     };
@@ -369,7 +373,8 @@ function plotAction(i) {
 
 function feed() {
   if (S.veg < 1) return;
-  S.veg--; S.hunger = clamp(S.hunger + 30); S.toilet = clamp(S.toilet + 10);
+  S.veg--; S.hunger = clamp(S.hunger + 30); S.sleepReady = false;
+  setTimeout(() => { S.toilet = Math.max(S.toilet, 85); save(); think(); }, 2300); // يحتاج المرحاض بعد الأكل
   fx('🥕', 'fly'); eat();
   say(S.hunger >= 100 ? 'شبع النمر تمامًا!' : 'ممم، لذيذة!'); setTimeout(praise, 700);
   save(); paintStats(); render();
@@ -399,8 +404,8 @@ function rinse() {
   save(); paintStats(); think();
 }
 function toilet() {
-  if (S.toilet < 30) { SFX.no(); say('لا يحتاج النمر المرحاض الآن.'); return; }
-  S.toilet = 0; SFX.flush(); fx('🚽', 'poof', 50, 60); anim('hop'); setTimeout(praise, 600);
+  if (S.toilet < 30 && S.sleepReady) { SFX.no(); say('لا يحتاج النمر المرحاض الآن.'); return; }
+  S.toilet = 0; S.sleepReady = true; SFX.flush(); fx('🚽', 'poof', 50, 60); anim('hop'); setTimeout(praise, 600);
   say('ارتاح النمر!'); save(); think();
 }
 
