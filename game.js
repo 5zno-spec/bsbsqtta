@@ -433,6 +433,28 @@ $('#stage').addEventListener('pointermove', e => {
   const r = $('#stage').getBoundingClientRect();
   $('#tiger').style.setProperty('--tilt', (((e.clientX - r.left) / r.width - 0.5) * 8).toFixed(1) + 'deg');
 });
+// في الحمام: صورة الخلفية أكبر من الشاشة، تُسحب بالإصبع أو الفأرة لإظهار بقيتها
+let bx = 50, pan = null, dragged = false;
+const stageEl = $('#stage');
+stageEl.style.setProperty('--bx', bx + '%');
+stageEl.addEventListener('pointerdown', e => {
+  if (mode !== 'bath' || e.button > 0) return;
+  dragged = false; pan = { x: e.clientX, bx };
+});
+addEventListener('pointermove', e => {
+  if (!pan) return;
+  const dx = e.clientX - pan.x;
+  if (!dragged && Math.abs(dx) < 8) return;
+  dragged = true; stageEl.classList.add('panning');
+  const W = stageEl.clientWidth, H = stageEl.clientHeight, range = Math.max(1, Math.max(W * 1.5, H * 1.18) - W);
+  bx = Math.max(0, Math.min(100, pan.bx - dx / range * 100));
+  stageEl.style.setProperty('--bx', bx.toFixed(1) + '%');
+});
+const endPan = () => { pan = null; stageEl.classList.remove('panning'); };
+addEventListener('pointerup', endPan); addEventListener('pointercancel', endPan);
+// بعد السحب لا نحسبها ضغطة (لا مشي ولا قفز)
+stageEl.addEventListener('click', e => { if (dragged) { e.stopPropagation(); dragged = false; } }, true);
+
 // في الحمام: يمشي النمر إلى أي مكان يضغط عليه اللاعب
 let walkTimer;
 $('#stage').addEventListener('click', e => {

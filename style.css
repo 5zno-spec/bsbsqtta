@@ -260,7 +260,11 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
   :root:not([data-theme="light"]) .nav button::before,:root:not([data-theme="light"]) .act::before{background:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,0))}}
 
 /* الحمام: الأرضية تمتد حتى أسفل الشاشة، والنمر يقف عليها */
-.stage[data-mode=bath]{background:url("bg/bath.jpg") center bottom / auto 118% no-repeat,#e2b284}
+/* صورة الحمام أكبر من الشاشة (150% من العرض على الأقل): تُسحب أفقيًا لإظهار بقيتها، و--bx موضعها */
+.stage[data-mode=bath]{touch-action:none; cursor:grab;
+  background:url("bg/bath.jpg") var(--bx,50%) bottom / max(150%,118vh) auto no-repeat,#e2b284;
+  background:url("bg/bath.jpg") var(--bx,50%) bottom / max(150%,118dvh) auto no-repeat,#e2b284}
+.stage[data-mode=bath].panning{cursor:grabbing}
 .stage[data-mode=bath] .actor{height:68%; bottom:-3%}
 
 /* فقاعة المدح */
