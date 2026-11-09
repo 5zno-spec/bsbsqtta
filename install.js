@@ -18,3 +18,8 @@
   box.addEventListener('click', e => { if (e.target === box) hide(); });
   window.addEventListener('appinstalled', hide);
 })();
+
+// العمل بلا إنترنت
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+}
