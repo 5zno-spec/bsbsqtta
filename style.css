@@ -214,3 +214,20 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 .think::before{width:13px; height:13px; left:calc(50% - 6px); bottom:-19px}
 .think::after{width:7px; height:7px; left:calc(50% + 4px); bottom:-30px}
 @keyframes thinkFloat{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-4px)}}
+
+/* نافذة التثبيت الزجاجية */
+.install{position:fixed; inset:0; z-index:50; display:flex; align-items:center; justify-content:center; padding:24px;
+  background:rgba(20,40,32,.25); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px); animation:fadeIn .3s}
+.install[hidden]{display:none}
+.glass{display:flex; flex-direction:column; align-items:center; gap:20px; padding:28px 32px 26px; border-radius:28px;
+  background:rgba(255,255,255,.28); border:1.5px solid rgba(255,255,255,.65);
+  -webkit-backdrop-filter:blur(22px) saturate(1.6); backdrop-filter:blur(22px) saturate(1.6);
+  box-shadow:0 18px 50px rgba(20,40,32,.28), inset 0 1px 0 rgba(255,255,255,.7); animation:glassIn .4s ease-out}
+.glass img{width:112px; height:112px; border-radius:26px; box-shadow:0 8px 20px rgba(20,40,32,.25); user-select:none}
+.glass button{display:flex; align-items:center; justify-content:center; gap:10px; min-width:170px; padding:12px 26px;
+  font:inherit; font-size:1.15rem; font-weight:800; color:#fff; cursor:pointer; border-radius:999px;
+  border:1.5px solid rgba(255,255,255,.6); background:rgba(31,77,58,.82);
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); box-shadow:0 6px 16px rgba(31,77,58,.35)}
+.glass button:active{transform:scale(.97)}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes glassIn{from{opacity:0; transform:translateY(16px) scale(.94)}}
