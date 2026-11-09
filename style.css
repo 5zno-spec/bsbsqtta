@@ -259,3 +259,17 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 /* الحمام: الأرضية تمتد حتى أسفل الشاشة، والنمر يقف عليها */
 .stage[data-mode=bath]{background:url("bg/bath.jpg") center bottom / auto 118% no-repeat,#e2b284}
 .stage[data-mode=bath] .actor{height:68%; bottom:-3%}
+
+/* فقاعة المدح */
+.praise{position:absolute; left:74%; top:4%; z-index:6; pointer-events:none; padding:8px 20px; border-radius:999px;
+  font-size:1.25rem; font-weight:800; color:#40260f; white-space:nowrap;
+  background:rgba(255,236,150,.6); border:1.5px solid rgba(255,255,255,.85);
+  -webkit-backdrop-filter:blur(12px) saturate(1.5); backdrop-filter:blur(12px) saturate(1.5);
+  box-shadow:0 6px 16px rgba(20,40,32,.22), inset 0 1.5px 0 rgba(255,255,255,.9);
+  animation:praisePop 1.8s ease-out forwards}
+@keyframes praisePop{
+  0%{opacity:0; transform:translate(-50%,10px) scale(.4)}
+  15%{opacity:1; transform:translate(-50%,0) scale(1.15)}
+  28%{transform:translate(-50%,0) scale(1)}
+  80%{opacity:1; transform:translate(-50%,-16px) scale(1)}
+  100%{opacity:0; transform:translate(-50%,-30px) scale(.95)}}

@@ -52,6 +52,16 @@ function fx(txt, cls, x, y) {
   if (x != null) { e.style.left = x + '%'; e.style.top = y + '%'; }
   $('#fx').appendChild(e); setTimeout(() => e.remove(), 1300);
 }
+// فقاعة مدح عند إتمام مهمة: كلمة مختلفة كل مرة
+const PRAISE = ['أحسنت', 'رائع', 'نشيط', 'عظيم'];
+let lastPraise = -1;
+function praise() {
+  let i; do { i = Math.floor(Math.random() * PRAISE.length); } while (i === lastPraise);
+  lastPraise = i;
+  const e = document.createElement('div');
+  e.className = 'praise'; e.textContent = PRAISE[i];
+  $('#actor').appendChild(e); setTimeout(() => e.remove(), 1800);
+}
 function eat() {
   const t = $('#tiger');
   t.classList.remove('eating'); void t.offsetWidth; t.classList.add('eating');
@@ -132,7 +142,7 @@ function render() {
       e.className = 'dirt'; e.textContent = '💩';
       e.setAttribute('aria-label', 'بقعة وسخ');
       e.style.left = d.x + '%'; e.style.top = d.y + '%';
-      e.onclick = () => { fx('✨', 'poof', d.x, d.y); S.dirt.splice(i, 1); save(); paintStats(); render(); say(S.dirt.length ? 'أحسنت، تابع.' : 'البيت نظيف!'); };
+      e.onclick = () => { fx('✨', 'poof', d.x, d.y); S.dirt.splice(i, 1); praise(); save(); paintStats(); render(); say(S.dirt.length ? 'أحسنت، تابع.' : 'البيت نظيف!'); };
       layer.appendChild(e);
     });
     const h = document.createElement('p');
@@ -235,7 +245,7 @@ function water(i) {
   $('#fx').appendChild(w); setTimeout(() => w.remove(), 1500);
   p.s = 2; p.t = Date.now() + GROW_MS;
   if (!needWater()) $('#bubbles').innerHTML = '';
-  say('سقيت البذرة فصارت نبتة! انتظر لتنمو.');
+  say('سقيت البذرة فصارت نبتة! انتظر لتنمو.'); praise();
   save(); render();
 }
 
@@ -243,7 +253,7 @@ function plantSeed() {
   const i = S.plots.findIndex(p => p.s === 0);
   if (i < 0) { say('كل الأرض مزروعة. اسقِ البذور أو احصد الجزر.'); return; }
   S.plots[i] = { s: 1, t: 0 };
-  say('وقعت البذرة على الأرض.');
+  say('وقعت البذرة على الأرض.'); praise();
   save(); render();
   setTimeout(ensureBubbles, 600);
 }
@@ -254,19 +264,21 @@ function plotAction(i) {
   if (p.s === 1) { say('تحتاج ماء. اضغط على الرشاش 🚿 داخل الفقاعات.'); ensureBubbles(); return; }
   if (p.s === 2) { say('ما زالت تنمو.'); return; }
   p.s = 0; S.veg++; fx('✨', 'poof', PLOT_X[i], 78);
-  say('حصدت جزرة!'); save(); render();
+  say('حصدت جزرة!'); praise(); save(); render();
 }
 
 function feed() {
   if (S.veg < 1) return;
   S.veg--; S.hunger = clamp(S.hunger + 30);
   fx('🥕', 'fly'); eat();
-  say(S.hunger >= 100 ? 'شبع النمر تمامًا!' : 'ممم، لذيذة!');
+  say(S.hunger >= 100 ? 'شبع النمر تمامًا!' : 'ممم، لذيذة!'); setTimeout(praise, 700);
   save(); paintStats(); render();
 }
 
 function scrub() {
-  S.hygiene = clamp(S.hygiene + 8); anim('wiggle');
+  const was = S.hygiene;
+  S.hygiene = clamp(S.hygiene + 8);
+  if (was < 100 && S.hygiene >= 100) praise(); anim('wiggle');
   for (let i = 0; i < 4; i++) fx('🫧', 'foam', 25 + Math.random() * 50, 30 + Math.random() * 30);
   say(S.hygiene >= 100 ? 'النمر نظيف ولامع!' : 'استمر في الفرك.');
   save(); paintStats();
