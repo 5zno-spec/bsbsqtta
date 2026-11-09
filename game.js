@@ -16,6 +16,25 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 const room = () => clamp(100 - S.dirt.length * 12);
 
 function say(t) { $('#msg').textContent = t; }
+
+// المهمة المطلوبة من اللاعب الآن، تظهر في فقاعة تفكير فوق رأس النمر
+function task() {
+  if (S.sleeping) return '';
+  if (mode === 'farm') return farmHint();
+  if (mode === 'eat') {
+    if (S.veg < 1) return 'لا يوجد طعام. اذهب إلى المزرعة واحصد جزرًا 🥕';
+    return S.hunger >= 100 ? 'شبعت! 😋' : 'أنا جائع! أطعمني جزرة 🥕';
+  }
+  if (mode === 'bath') return S.hygiene >= 100 ? 'أنا نظيف ولامع ✨' : 'افرك جسمي بالصابون 🧼';
+  if (mode === 'clean') return S.dirt.length ? `المس البقع لإزالتها 💩 (${S.dirt.length})` : 'البيت نظيف الآن ✨';
+  if (mode === 'sleep') return 'أنا متعب… أطفئ الضوء لأنام 🌙';
+  return '';
+}
+function think() {
+  const el = $('#think'), t = task();
+  if (el.textContent !== t) el.textContent = t;
+  el.hidden = !t;
+}
 function anim(c) {
   const t = $('#tiger');
   t.classList.remove('hop', 'chew', 'wiggle'); void t.offsetWidth; t.classList.add(c);
@@ -69,7 +88,6 @@ function setMode(m) {
   document.querySelectorAll('.nav button').forEach(b =>
     b.setAttribute('aria-current', b.dataset.mode === m));
   render();
-  if (m === 'farm') say(farmHint());
 }
 
 function render() {
@@ -97,7 +115,6 @@ function render() {
     b.className = 'act'; b.disabled = S.veg < 1;
     b.textContent = `أطعمه جزرة (عندك ${S.veg})`;
     b.onclick = feed; panel.appendChild(b);
-    if (S.veg < 1) say('لا يوجد طعام. اذهب إلى المزرعة واحصد جزرًا.');
   }
   if (mode === 'bath') {
     const b = document.createElement('button');
@@ -115,7 +132,7 @@ function render() {
     });
     const h = document.createElement('p');
     h.className = 'hint';
-    h.textContent = S.dirt.length ? `المس البقع لإزالتها (${S.dirt.length})` : 'البيت نظيف الآن.';
+    h.textContent = `💩 ${S.dirt.length}`;
     panel.appendChild(h);
   }
   if (mode === 'sleep') {
@@ -133,6 +150,7 @@ function render() {
       layer.appendChild(z);
     }
   }
+  think();
 }
 
 // ---------- المزرعة ----------
@@ -220,7 +238,7 @@ function plantSeed() {
   const i = S.plots.findIndex(p => p.s === 0);
   if (i < 0) { say('كل الأرض مزروعة. اسقِ البذور أو احصد الجزر.'); return; }
   S.plots[i] = { s: 1, t: 0 };
-  say('وقعت البذرة على الأرض. اضغط على الرشاش 🚿 داخل الفقاعات لتسقيها.');
+  say('وقعت البذرة على الأرض.');
   save(); render();
   setTimeout(ensureBubbles, 600);
 }
@@ -262,10 +280,10 @@ function tick() {
     S.dirt.push({ x: 8 + Math.random() * 84, y: 20 + Math.random() * 55 });
     if (mode === 'clean') redraw = true;
   }
-  S.plots.forEach(p => { if (p.s === 2 && Date.now() >= p.t) { p.s = 3; if (mode === 'farm') say('الجزر جاهز! المس الجزرة لتحصدها.'); } });
+  S.plots.forEach(p => { if (p.s === 2 && Date.now() >= p.t) p.s = 3; });
   if (mode === 'farm') { paintPlots(); ensureBubbles(); }
 
-  save(); paintStats();
+  save(); paintStats(); think();
   if (redraw) render();
 }
 
