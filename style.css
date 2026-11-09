@@ -255,3 +255,7 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
   :root:not([data-theme="light"]) .nav button[aria-current=true]{background:rgba(79,157,95,.5); border-color:rgba(255,255,255,.6)}
   :root:not([data-theme="light"]) .act{background:rgba(245,197,24,.55); color:#1c2b26}
   :root:not([data-theme="light"]) .nav button::before,:root:not([data-theme="light"]) .act::before{background:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,0))}}
+
+/* الحمام: الأرضية تمتد حتى أسفل الشاشة، والنمر يقف عليها */
+.stage[data-mode=bath]{background:url("bg/bath.jpg") center bottom / auto 118% no-repeat,#e2b284}
+.stage[data-mode=bath] .actor{height:68%; bottom:-3%}
