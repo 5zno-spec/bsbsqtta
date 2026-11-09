@@ -97,6 +97,31 @@ function paintStats() {
   }
 }
 
+// زر فعل: أيقونة كبيرة فقط، ونصه يظهر في فقاعة سريعة عند الضغط
+function setAct(b, icon, label) {
+  b.innerHTML = `<em>${icon}</em>`;
+  b.dataset.label = label; b.setAttribute('aria-label', label);
+}
+
+let tipTimer;
+function showTip(btn) {
+  const text = btn.dataset.label; if (!text) return;
+  let t = $('#tip');
+  if (!t) { t = document.createElement('div'); t.id = 'tip'; t.className = 'tip'; document.body.appendChild(t); }
+  t.textContent = text; t.classList.remove('on'); void t.offsetWidth;
+  const r = btn.getBoundingClientRect();
+  t.style.left = '0px'; t.style.bottom = (innerHeight - r.top + 12) + 'px';
+  const w = t.offsetWidth, cx = r.left + r.width / 2;
+  const x = Math.max(8 + w / 2, Math.min(innerWidth - 8 - w / 2, cx));
+  t.style.left = x + 'px'; t.style.setProperty('--tail', (cx - x) + 'px');
+  t.classList.add('on');
+  clearTimeout(tipTimer); tipTimer = setTimeout(() => t.classList.remove('on'), 900);
+}
+document.addEventListener('pointerdown', e => {
+  const b = e.target.closest('.nav button, .act');
+  if (b) showTip(b);
+});
+
 function setMode(m) {
   if (S.sleeping && m !== 'sleep') { S.sleeping = false; say('استيقظ النمر'); }
   mode = m;
@@ -117,7 +142,7 @@ function render() {
     paintPlots();
     const b = document.createElement('button');
     b.className = 'act seed'; b.disabled = !S.plots.some(p => p.s === 0);
-    b.innerHTML = '<em>🌰</em>بذرة';
+    setAct(b, '🌰', 'بذرة');
     b.onclick = () => plantSeed();
     panel.appendChild(b);
     const c = document.createElement('p');
@@ -128,12 +153,12 @@ function render() {
   if (mode === 'eat') {
     const b = document.createElement('button');
     b.className = 'act'; b.disabled = S.veg < 1;
-    b.textContent = `أطعمه جزرة (عندك ${S.veg})`;
+    setAct(b, '🥕', `أطعمه جزرة (عندك ${S.veg})`);
     b.onclick = feed; panel.appendChild(b);
   }
   if (mode === 'bath') {
     const b = document.createElement('button');
-    b.className = 'act'; b.textContent = 'افرك بالصابون';
+    b.className = 'act'; setAct(b, '🧼', 'افرك بالصابون');
     b.onclick = scrub; panel.appendChild(b);
   }
   if (mode === 'clean') {
@@ -153,7 +178,7 @@ function render() {
   if (mode === 'sleep') {
     const b = document.createElement('button');
     b.className = 'act';
-    b.textContent = S.sleeping ? 'أيقظه' : 'أطفئ الضوء ونام';
+    setAct(b, S.sleeping ? '☀️' : '🌙', S.sleeping ? 'أيقظه' : 'أطفئ الضوء ونام');
     b.onclick = () => {
       S.sleeping = !S.sleeping;
       say(S.sleeping ? 'نام النمر…' : 'استيقظ النمر');
@@ -303,7 +328,10 @@ function tick() {
   if (redraw) render();
 }
 
-document.querySelectorAll('.nav button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
+document.querySelectorAll('.nav button').forEach(b => {
+  const s = b.querySelector('span'); b.dataset.label = s.textContent; b.setAttribute('aria-label', s.textContent);
+  b.onclick = () => setMode(b.dataset.mode);
+});
 $('#stage').addEventListener('pointermove', e => {
   const r = $('#stage').getBoundingClientRect();
   $('#tiger').style.setProperty('--tilt', (((e.clientX - r.left) / r.width - 0.5) * 8).toFixed(1) + 'deg');
