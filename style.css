@@ -1,0 +1,205 @@
+:root{
+  --ink:#1c2b26; --forest:#1f4d3a; --meadow:#4f9d5f; --sun:#f5c518;
+  --soil:#7a4e2d; --paper:#ffffff; --track:#d9e4de; --bad:#d6453d;
+  --font:"Baloo Bhaijaan 2","Segoe UI",Tahoma,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{
+  font-family:var(--font); color:var(--ink); background:#e8f1ec;
+  display:flex; justify-content:center; overflow:hidden;
+}
+.app{position:relative; width:100%; max-width:480px; height:100vh; height:100dvh; overflow:hidden}
+h1{width:fit-content; margin:0 auto; padding:0 16px; font-size:1.1rem; line-height:1.55; font-weight:800; color:var(--forest); text-align:center;
+  border-radius:12px; background:rgba(255,255,255,.8); background:color-mix(in srgb,var(--paper) 80%,transparent)}
+
+.stats{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:7px 12px 8px; border-radius:16px;
+  background:rgba(255,255,255,.8); background:color-mix(in srgb,var(--paper) 80%,transparent)}
+.stat{font-size:.72rem; font-weight:700; white-space:nowrap}
+.stat i{display:block; height:10px; background:var(--track); border-radius:6px; overflow:hidden; margin-top:2px}
+.stat b{display:block; height:100%; width:50%; background:var(--meadow); border-radius:6px; transition:width .4s, background .4s}
+.stat b.low{background:var(--bad)}
+
+.stage{
+  position:absolute; inset:0; overflow:hidden; transition:background .5s;
+  --hz:calc(var(--hud) + var(--ph) * .55);
+  background:linear-gradient(#bfe6f0 0 var(--hz),#6fb97a var(--hz));
+}
+.stage[data-mode=farm]{--hz:calc(var(--hud) + var(--ph) * .5); --hz2:calc(var(--hud) + var(--ph) * .72);
+  background:linear-gradient(#bfe6f0 0 var(--hz),#6fb97a var(--hz) var(--hz2),var(--soil) var(--hz2))}
+.stage[data-mode=eat]{--hz:calc(var(--hud) + var(--ph) * .62); background:linear-gradient(#a9d3cf 0 var(--hz),#b98b5e var(--hz))}
+.stage[data-mode=bath]{background:url(bg/bath.jpg) center/cover no-repeat,#d4eefb}
+.stage[data-mode=clean]{--hz:calc(var(--hud) + var(--ph) * .62); background:linear-gradient(#c9c3e8 0 var(--hz),#a77f58 var(--hz))}
+.stage[data-mode=sleep]{--hz:calc(var(--hud) + var(--ph) * .62); background:linear-gradient(#1b2450 0 var(--hz),#2b2f55 var(--hz))}
+
+.actor{position:absolute;left:50%;bottom:3%;height:min(82%,112vw);transform:translateX(-50%)}
+.stage[data-mode=bath] .actor{height:68%;bottom:8%}
+.actor.walk{animation:stroll 12s ease-in-out infinite}
+.tiger{display:block;height:100%;width:auto;user-select:none;-webkit-user-drag:none;transform-origin:50% 100%;
+  filter:drop-shadow(0 8px 0 rgba(0,0,0,.12));rotate:var(--tilt,0deg);transition:rotate .25s;animation:breathe 2.6s ease-in-out infinite}
+.actor.walk .tiger{animation:bob .55s ease-in-out infinite}
+.tiger.hop{animation:hop .45s ease-out}
+.tiger.chew{animation:chew .9s ease-in-out}
+.tiger.wiggle{animation:wiggle .5s ease-in-out}
+.stage.night .tiger{filter:brightness(.55);animation:breathe 5.5s ease-in-out infinite}
+.shadow{position:absolute;left:50%;bottom:-2%;width:60%;height:5%;background:rgba(0,0,0,.18);border-radius:50%;transform:translateX(-50%);animation:shade 2.6s ease-in-out infinite}
+@keyframes stroll{0%,100%{left:36%}50%{left:64%}}
+@keyframes breathe{0%,100%{transform:scale(1,1)}50%{transform:scale(1.025,.985)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+@keyframes hop{0%{transform:translateY(0) scale(1.05,.92)}35%{transform:translateY(-26px) scale(.96,1.06)}70%{transform:translateY(0) scale(1.05,.93)}100%{transform:none}}
+@keyframes chew{0%,100%{transform:none}20%,60%{transform:scale(1.04,.95)}40%,80%{transform:scale(.98,1.02)}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-4deg)}75%{transform:rotate(4deg)}}
+@keyframes shade{0%,100%{transform:translateX(-50%) scaleX(1)}50%{transform:translateX(-50%) scaleX(1.06)}}
+.decor{position:absolute;inset:0;pointer-events:none}
+.decor span{position:absolute}
+.sun{top:5%;right:8%;font-size:2.4rem;animation:spin 24s linear infinite}
+.cloud{font-size:3rem;opacity:.9;animation:drift linear infinite}
+.bfly{font-size:1.6rem;top:35%;animation:flutter 9s ease-in-out infinite}
+.bub{bottom:-8%;animation:rise 6s linear infinite;opacity:.85}
+.drop{top:-6%;font-size:1rem;animation:fall .9s linear infinite}
+.star{font-size:1rem;animation:twinkle 2.2s ease-in-out infinite}
+.moon{top:6%;left:8%;font-size:2.4rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes drift{from{left:-18%}to{left:105%}}
+@keyframes flutter{0%,100%{left:10%;transform:translateY(0)}25%{left:40%;transform:translateY(-30px)}50%{left:80%;transform:translateY(10px)}75%{left:45%;transform:translateY(-25px)}}
+@keyframes rise{to{transform:translateY(-480px)}}
+@keyframes fall{to{transform:translateY(420px)}}
+@keyframes twinkle{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+.fx>*{pointer-events:none}
+.fly{position:absolute;left:50%;transform:translateX(-50%);animation:toMouth .6s ease-in forwards}
+@keyframes toMouth{from{top:86%;font-size:2.6rem;opacity:1}to{top:44%;font-size:1rem;opacity:0}}
+.heart{position:absolute;font-size:1.6rem;animation:float 1.1s ease-out forwards}
+.poof{position:absolute;font-size:2rem;animation:pop .4s ease-out forwards}
+@keyframes pop{from{transform:translate(-50%,-50%) scale(.4);opacity:1}to{transform:translate(-50%,-50%) scale(1.8);opacity:0}}
+.dirt{animation:wobble 1.4s ease-in-out infinite}
+@keyframes wobble{0%,100%{transform:translate(-50%,-50%) rotate(-6deg)}50%{transform:translate(-50%,-50%) rotate(6deg)}}
+.plot.fresh em{animation:sprout .5s ease-out}
+@keyframes sprout{from{transform:scale(.3)}60%{transform:scale(1.25)}to{transform:scale(1)}}
+.layer{position:absolute; inset:0; pointer-events:none}
+.layer>*{pointer-events:auto}
+.dirt{
+  position:absolute; width:46px; height:46px; border:0; background:none; font-size:2rem; cursor:pointer;
+  transform:translate(-50%,-50%); line-height:1;
+}
+.foam{position:absolute; font-size:2rem; pointer-events:none; animation:float 1.2s ease-out forwards}
+@keyframes float{from{opacity:1; transform:translateY(0)}to{opacity:0; transform:translateY(-60px)}}
+.zzz{position:absolute; top:14%; right:18%; font-size:2.2rem; font-weight:800; color:#fff; animation:float 2.4s ease-in-out infinite}
+
+.msg{width:fit-content; max-width:100%; margin:0 auto; padding:4px 14px; text-align:center; font-weight:700; font-size:.9rem; color:var(--forest);
+  border-radius:14px; background:rgba(255,255,255,.82); background:color-mix(in srgb,var(--paper) 82%,transparent)}
+.msg:empty{display:none}
+
+.panel{display:flex; gap:10px; justify-content:center; align-items:stretch; min-height:64px}
+.panel .hint{align-self:center; font-weight:700; text-align:center; padding:6px 14px; border-radius:12px;
+  background:rgba(255,255,255,.82); background:color-mix(in srgb,var(--paper) 82%,transparent)}
+.act, .plot{
+  font-family:inherit; font-weight:700; font-size:1rem; cursor:pointer;
+  border:3px solid var(--forest); background:var(--sun); color:var(--ink);
+  border-radius:16px; padding:10px 18px; min-height:56px;
+}
+.act:disabled{opacity:.45; cursor:not-allowed}
+.act:active,.plot:active{transform:translateY(2px)}
+.plot{flex:1; background:var(--soil); color:#fff; border-color:#4a2d17; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:.85rem}
+.plot em{font-style:normal; font-size:1.6rem; line-height:1.1}
+.plot.ready{background:var(--meadow); border-color:var(--forest)}
+
+.nav{display:grid; grid-template-columns:repeat(5,1fr); gap:6px}
+.nav button{
+  font-family:inherit; font-weight:700; font-size:.75rem; cursor:pointer;
+  background:var(--paper); border:3px solid var(--track); border-radius:14px; padding:6px 0;
+  display:flex; flex-direction:column; align-items:center; font-size:1.3rem; color:var(--ink);
+}
+.nav button span{font-size:.75rem}
+.nav button[aria-current=true]{border-color:var(--forest); background:#d7ecd9}
+
+button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+.tiger{position:relative;aspect-ratio:1/1}
+.tiger img{display:block;width:100%;height:100%;user-select:none;-webkit-user-drag:none}
+.mouth{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:0;transform:scaleY(.1);transform-origin:46% 30%}
+.m{fill:#8e1f33;stroke:#1b1b1b;stroke-width:9;stroke-linejoin:round}
+.tongue{fill:#ef7b8a}
+.tiger.eating .mouth{animation:gape 2s ease-in-out forwards}
+@keyframes gape{0%{opacity:0;transform:scaleY(.1)}10%{opacity:1;transform:scaleY(1)}30%{transform:scaleY(1)}40%{transform:scaleY(.3)}50%{transform:scaleY(.8)}60%{transform:scaleY(.3)}70%{transform:scaleY(.8)}80%{transform:scaleY(.3)}100%{opacity:0;transform:scaleY(.1)}}
+
+.tiger img{position:absolute;inset:0}
+.p-arm{transform-origin:33.7% 51.3%;animation:wave 1.4s ease-in-out infinite}
+.p-tail{transform-origin:68.8% 75.7%;animation:tailShake .7s ease-in-out infinite}
+.p-legL{transform-origin:39.1% 83%}
+.p-legR{transform-origin:61.5% 83%}
+.actor.walk .p-legL{animation:stepL .55s ease-in-out infinite}
+.actor.walk .p-legR{animation:stepR .55s ease-in-out infinite}
+.actor.walk .p-arm{animation-duration:.55s}
+.stage.night .part{animation:none}
+@keyframes wave{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(10deg)}}
+@keyframes tailShake{0%,100%{transform:rotate(-4deg)}25%{transform:rotate(3deg)}50%{transform:rotate(-3deg)}75%{transform:rotate(4deg)}}
+@keyframes stepL{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
+@keyframes stepR{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-8deg)}}
+.stage[data-mode=farm] .actor{height:min(52%,100vw);bottom:5%;left:70%}
+
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#e6efe9;--forest:#8fd1a4;--paper:#22302a;--track:#34463d}
+:root:not([data-theme="light"]) body{background:#141d19}
+:root:not([data-theme="light"]) .nav button[aria-current=true]{background:#2c4a39}
+:root:not([data-theme="light"]) .act{color:#1c2b26}}
+
+/* رمش العينين */
+.eyes{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.lid{transform:translateY(var(--dy));animation:blink 4.2s ease-in-out infinite}
+.lf{fill:#f0cb1c}
+.ll{fill:none;stroke:#1b1b1b;stroke-width:8;stroke-linecap:round}
+@keyframes blink{0%,90%,100%{transform:translateY(var(--dy))}93.5%{transform:translateY(0)}}
+.stage.night .lid{animation:none;transform:translateY(0)}
+
+/* المزرعة: النمر ثابت على اليمين، والحفر على الأرض */
+.actor{transition:left .5s ease}
+.spot{position:absolute;top:93%;transform:translate(-50%,-100%);width:54px;border:0;background:none;padding:0;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;font-family:inherit}
+.spot em{font-style:normal;line-height:1;height:3rem;display:flex;align-items:flex-end;font-size:1.5rem;margin-bottom:-9px;
+  position:relative;z-index:1;transform-origin:50% 100%;transition:font-size 1s linear}
+.spot .mound{display:block;width:46px;height:14px;border-radius:50%;background:radial-gradient(#6b4226,#4a2d17);box-shadow:0 2px 0 rgba(0,0,0,.22)}
+.spot small{font-size:.72rem;font-weight:700;color:#fff;min-height:1.1em;margin-top:2px;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.spot em.seed{animation:seedDrop .6s ease-in}
+.spot em.sprout{animation:sprout .5s ease-out}
+.spot em.ripe{animation:ripe 1.2s ease-in-out infinite}
+@keyframes seedDrop{from{transform:translateY(-150px);opacity:0}30%{opacity:1}75%{transform:translateY(0)}88%{transform:translateY(-8px)}to{transform:translateY(0)}}
+@keyframes ripe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.1)}}
+.act.seed{display:flex;align-items:center;gap:8px;font-size:1.15rem}
+.act.seed em{font-style:normal;font-size:1.7rem}
+
+.bubble{position:absolute;bottom:-90px;width:68px;height:68px;border:0;padding:0;background:none;cursor:pointer;
+  animation:bubbleUp 7s linear forwards}
+.bubble i{display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-style:normal;font-size:1.9rem;border-radius:50%;
+  background:radial-gradient(circle at 30% 28%,rgba(255,255,255,.95) 0 9%,rgba(255,255,255,.3) 10% 50%,rgba(150,210,255,.5) 75%);
+  border:2px solid rgba(255,255,255,.9);box-shadow:inset 0 0 12px rgba(255,255,255,.6),0 2px 6px rgba(0,0,0,.15);
+  animation:sway 2.2s ease-in-out infinite alternate}
+@keyframes bubbleUp{from{bottom:-90px}to{bottom:100%}}
+@keyframes sway{from{transform:translateX(-14px)}to{transform:translateX(14px)}}
+
+.water{position:absolute;transform:translateX(-50%);font-size:2.2rem;line-height:1;pointer-events:none;animation:waterShow 1.4s ease-out forwards}
+.water b{position:absolute;top:100%;font-size:1rem;font-weight:400;animation:dropFall .5s linear infinite}
+@keyframes waterShow{0%{opacity:0;transform:translate(-50%,-20px) rotate(0)}15%,85%{opacity:1;transform:translate(-50%,0) rotate(-18deg)}100%{opacity:0;transform:translate(-50%,-10px) rotate(0)}}
+@keyframes dropFall{from{transform:translateY(0);opacity:1}to{transform:translateY(90px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.bubble{bottom:35%}}
+
+/* ===== تخطيط ملء الشاشة: المشهد هو الخلفية، والشريط العلوي والسفلي فوقه ===== */
+:root{
+  --hud:calc(92px + env(safe-area-inset-top,0px));
+  --dock:calc(208px + env(safe-area-inset-bottom,0px));
+  --ph:calc(100% - var(--hud) - var(--dock));
+}
+.play{position:absolute; inset:var(--hud) 0 var(--dock) 0}
+.hud,.dock{position:absolute; left:0; right:0; z-index:5; pointer-events:none}
+.hud>*,.dock>*,.panel>*,.nav>*{pointer-events:auto}
+.hud{top:0; height:var(--hud); padding:calc(6px + env(safe-area-inset-top,0px)) 12px 0; display:flex; flex-direction:column; gap:6px}
+.dock{bottom:0; height:var(--dock); padding:0 12px calc(8px + env(safe-area-inset-bottom,0px));
+  display:flex; flex-direction:column; justify-content:flex-end; gap:6px}
+.panel{pointer-events:none}
+@media (max-height:690px){
+  :root{--hud:calc(78px + env(safe-area-inset-top,0px)); --dock:calc(176px + env(safe-area-inset-bottom,0px))}
+  h1{display:none}
+  .msg{font-size:.8rem}
+  .panel{min-height:58px}
+  .nav button{font-size:1.1rem; padding:3px 0}
+  .nav button span{font-size:.65rem}
+}
