@@ -204,12 +204,11 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
   .nav button span{font-size:.65rem}
 }
 
-/* فقاعة التفكير فوق رأس النمر */
+/* فقاعة التفكير فوق رأس النمر: دائرة فيها صورة المطلوب */
 .think{position:absolute; left:50%; bottom:97%; transform:translateX(-50%); z-index:4; pointer-events:none;
-  width:max-content; max-width:min(210px,62vw); padding:7px 14px; border-radius:22px;
+  width:68px; height:68px; border-radius:50%; display:flex; align-items:center; justify-content:center;
   background:#fff; border:2.5px solid var(--forest); box-shadow:0 3px 0 rgba(31,77,58,.18);
-  color:var(--forest); font-weight:700; font-size:.82rem; line-height:1.45; text-align:center;
-  animation:thinkFloat 3s ease-in-out infinite}
+  font-size:2.2rem; line-height:1; animation:thinkFloat 3s ease-in-out infinite}
 .think[hidden]{display:none}
 .think::before,.think::after{content:""; position:absolute; border-radius:50%; background:#fff; border:2.5px solid var(--forest)}
 .think::before{width:13px; height:13px; left:calc(50% - 6px); bottom:-19px}

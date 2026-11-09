@@ -17,22 +17,27 @@ const room = () => clamp(100 - S.dirt.length * 12);
 
 function say(t) { $('#msg').textContent = t; }
 
-// المهمة المطلوبة من اللاعب الآن، تظهر في فقاعة تفكير فوق رأس النمر
+// المهمة المطلوبة من اللاعب الآن: صورة فقط في فقاعة تفكير فوق رأس النمر
 function task() {
-  if (S.sleeping) return '';
-  if (mode === 'farm') return farmHint();
-  if (mode === 'eat') {
-    if (S.veg < 1) return 'لا يوجد طعام. اذهب إلى المزرعة واحصد جزرًا 🥕';
-    return S.hunger >= 100 ? 'شبعت! 😋' : 'أنا جائع! أطعمني جزرة 🥕';
+  if (S.sleeping) return null;
+  if (mode === 'farm') {
+    if (S.plots.some(p => p.s === 3)) return ['🥕', 'احصد الجزر'];
+    if (needWater()) return ['🚿', 'اسقِ البذرة'];
+    if (S.plots.some(p => p.s === 2)) return ['⏳', 'انتظر النبتة تنمو'];
+    return ['🌰', 'ازرع البذرة'];
   }
-  if (mode === 'bath') return S.hygiene >= 100 ? 'أنا نظيف ولامع ✨' : 'افرك جسمي بالصابون 🧼';
-  if (mode === 'clean') return S.dirt.length ? `المس البقع لإزالتها 💩 (${S.dirt.length})` : 'البيت نظيف الآن ✨';
-  if (mode === 'sleep') return 'أنا متعب… أطفئ الضوء لأنام 🌙';
-  return '';
+  if (mode === 'eat') {
+    if (S.veg < 1) return ['🌱', 'اذهب إلى المزرعة'];
+    return S.hunger >= 100 ? ['😋', 'شبع النمر'] : ['🥕', 'أطعمه جزرة'];
+  }
+  if (mode === 'bath') return S.hygiene >= 100 ? ['✨', 'النمر نظيف'] : ['🧼', 'افرك بالصابون'];
+  if (mode === 'clean') return S.dirt.length ? ['💩', 'أزل البقع'] : ['✨', 'البيت نظيف'];
+  if (mode === 'sleep') return ['🌙', 'أطفئ الضوء لينام'];
+  return null;
 }
 function think() {
   const el = $('#think'), t = task();
-  if (el.textContent !== t) el.textContent = t;
+  if (t) { if (el.textContent !== t[0]) el.textContent = t[0]; el.setAttribute('aria-label', t[1]); }
   el.hidden = !t;
 }
 function anim(c) {
