@@ -140,7 +140,6 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#e6efe9;--forest:#8fd1a4;--paper:#22302a;--track:#34463d}
 :root:not([data-theme="light"]) body{background:#141d19}
-:root:not([data-theme="light"]) .nav button[aria-current=true]{background:#2c4a39}
 :root:not([data-theme="light"]) .act{color:#1c2b26}}
 
 /* رمش العينين */
@@ -231,3 +230,28 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 .glass button:active{transform:scale(.97)}
 @keyframes fadeIn{from{opacity:0}}
 @keyframes glassIn{from{opacity:0; transform:translateY(16px) scale(.94)}}
+
+/* أزرار زجاجية لطيفة */
+.nav button,.act{
+  position:relative; overflow:hidden; isolation:isolate; font-family:inherit; cursor:pointer;
+  background:rgba(255,255,255,.42);
+  -webkit-backdrop-filter:blur(14px) saturate(1.6); backdrop-filter:blur(14px) saturate(1.6);
+  border:1.5px solid rgba(255,255,255,.72); border-radius:20px;
+  box-shadow:0 6px 16px rgba(20,40,32,.18), inset 0 1.5px 0 rgba(255,255,255,.85), inset 0 -2px 6px rgba(255,255,255,.18);
+  transition:transform .15s, background .25s, box-shadow .25s, border-color .25s}
+.nav button::before,.act::before{
+  content:""; position:absolute; inset:0 0 50% 0; z-index:-1; pointer-events:none;
+  background:linear-gradient(rgba(255,255,255,.55),rgba(255,255,255,0)); border-radius:inherit}
+.nav button:active,.act:active{transform:scale(.95); box-shadow:0 2px 8px rgba(20,40,32,.18), inset 0 1.5px 0 rgba(255,255,255,.85)}
+.nav button[aria-current=true]{
+  background:rgba(143,214,160,.55); border-color:rgba(255,255,255,.95);
+  box-shadow:0 6px 18px rgba(31,77,58,.28), inset 0 1.5px 0 rgba(255,255,255,.9), 0 0 0 2px rgba(79,157,95,.55)}
+.act{background:rgba(245,197,24,.5); border-color:rgba(255,255,255,.8); padding:10px 22px}
+.act:disabled{opacity:.5; filter:saturate(.6); cursor:not-allowed}
+.act:disabled:active{transform:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --glass:rgba(34,48,42,.5)}
+  :root:not([data-theme="light"]) .nav button{background:rgba(34,48,42,.5); border-color:rgba(255,255,255,.3)}
+  :root:not([data-theme="light"]) .nav button[aria-current=true]{background:rgba(79,157,95,.5); border-color:rgba(255,255,255,.6)}
+  :root:not([data-theme="light"]) .act{background:rgba(245,197,24,.55); color:#1c2b26}
+  :root:not([data-theme="light"]) .nav button::before,:root:not([data-theme="light"]) .act::before{background:linear-gradient(rgba(255,255,255,.22),rgba(255,255,255,0))}}
