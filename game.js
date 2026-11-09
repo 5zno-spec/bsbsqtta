@@ -2,7 +2,7 @@ const $ = s => document.querySelector(s);
 const KEY = 'tiger-day-v1';
 const clamp = v => Math.max(0, Math.min(100, v));
 const fresh = () => ({
-  hunger: 70, hygiene: 70, energy: 70, veg: 0, toilet: 25, lather: 0,
+  hunger: 70, hygiene: 70, energy: 70, veg: 0, toilet: 25, lather: 0, brush: 0, routine: null,
   plots: [0, 1, 2].map(() => ({ s: 0, t: 0 })), // s: 0 فارغ، 1 مزروع، 2 ينمو، 3 جاهز
   dirt: [], sleeping: false
 });
@@ -10,6 +10,9 @@ const fresh = () => ({
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { S = fresh(); }
 S.toilet = S.toilet ?? 25; S.lather = S.lather ?? 0; // حقول جديدة لحفظ قديم
+S.brush = S.brush ?? 0; S.routine = S.routine ?? null;
+// تسلسل العناية: المرحاض ← الصابون ← الماء ← الفرشاة ← الطعام (routine: soap | rinse | brush | food | null)
+const routineBusy = () => S.routine === 'soap' || S.routine === 'rinse' || S.routine === 'brush';
 let mode = S.sleeping ? 'sleep' : 'eat';
 const GROW_MS = 15000;
 
@@ -33,11 +36,16 @@ function task() {
     return ['🌰', 'ازرع البذرة'];
   }
   if (mode === 'eat') {
+    if (routineBusy()) return ['🛁', 'اغسله أولًا في الحمام'];
     if (S.veg < 1) return ['🌱', 'اذهب إلى المزرعة'];
     return S.hunger >= 100 ? ['😋', 'شبع النمر'] : ['🥕', 'أطعمه جزرة'];
   }
   if (mode === 'bath') {
     if (S.toilet >= 70) return ['🚽', 'النمر يحتاج المرحاض'];
+    if (S.routine === 'soap') return ['🧼', 'افرك بالصابون'];
+    if (S.routine === 'rinse') return ['🚿', 'اشطفه بالماء'];
+    if (S.routine === 'brush') return ['🪥', 'نظّف أسنانه بالفرشاة'];
+    if (S.routine === 'food') return ['🥕', 'حان وقت الطعام'];
     if (S.hygiene >= 100 && S.lather <= 0) return ['✨', 'النمر نظيف'];
     return S.lather >= 50 ? ['🚿', 'اشطفه بالماء'] : ['🧼', 'افرك بالصابون'];
   }
@@ -220,12 +228,12 @@ function render() {
   }
   if (mode === 'eat') {
     const b = document.createElement('button');
-    b.className = 'act'; b.disabled = S.veg < 1;
+    b.className = 'act'; b.disabled = S.veg < 1 || routineBusy();
     setAct(b, '🥕', `أطعمه جزرة (عندك ${S.veg})`);
     b.onclick = feed; panel.appendChild(b);
   }
   if (mode === 'bath') {
-    [['🧼', 'استحمام بالصابون', soap], ['🚿', 'غسل بالماء', rinse], ['🚽', 'المرحاض', toilet]].forEach(([ic, lb, fn]) => {
+    [['🚽', 'المرحاض', toilet], ['🧼', 'استحمام بالصابون', soap], ['🚿', 'غسل بالماء', rinse], ['🪥', 'غسل بالفرشاة', brushUp]].forEach(([ic, lb, fn]) => {
       const b = document.createElement('button');
       b.className = 'act'; setAct(b, ic, lb); b.onclick = fn; panel.appendChild(b);
     });
@@ -373,6 +381,8 @@ function plotAction(i) {
 
 function feed() {
   if (S.veg < 1) return;
+  if (routineBusy()) { SFX.no(); say('اغسله أولًا: صابون ثم ماء ثم فرشاة 🧼🚿🪥'); return; }
+  S.routine = null;
   S.veg--; S.hunger = clamp(S.hunger + 30); S.sleepReady = false;
   setTimeout(() => { S.toilet = Math.max(S.toilet, 85); save(); think(); }, 2300); // يحتاج المرحاض بعد الأكل
   fx('🥕', 'fly'); eat();
@@ -386,6 +396,7 @@ function soap() {
   S.lather = clamp(S.lather + 25); S.hygiene = clamp(S.hygiene + 5);
   SFX.scrub(); anim('wiggle'); foam('🫧', 4);
   if (S.hygiene >= 100) S.wakeBath = false;
+  if (S.routine === 'soap' && S.lather >= 50) S.routine = 'rinse';
   say(S.lather >= 50 ? 'كثير من الرغوة! اشطفه بالماء 🚿' : 'استمر في الفرك.');
   save(); paintStats(); think();
 }
@@ -400,13 +411,28 @@ function rinse() {
   anim('wiggle');
   if (was < 100 && S.hygiene >= 100) praise();
   if (S.hygiene >= 100) S.wakeBath = false;
-  say(S.hygiene >= 100 ? 'النمر نظيف ولامع!' : 'تم الشطف! كرّر الصابون لينظف أكثر.');
+  if (S.routine === 'rinse') S.routine = 'brush';
+  say(S.routine === 'brush' ? 'تم الشطف! الآن الفرشاة 🪥' : S.hygiene >= 100 ? 'النمر نظيف ولامع!' : 'تم الشطف! كرّر الصابون لينظف أكثر.');
+  save(); paintStats(); think();
+}
+function brushUp() {
+  if (S.routine === 'soap' || S.routine === 'rinse') {
+    SFX.no(); say(S.routine === 'soap' ? 'ابدأ بالصابون 🧼 ثم الماء 🚿' : 'اشطفه بالماء أولًا 🚿'); return;
+  }
+  S.brush = clamp(S.brush + 25);
+  SFX.scrub(); anim('wiggle'); foam('✨', 4, 25);
+  if (S.routine === 'brush' && S.brush >= 50) {
+    S.routine = 'food'; S.brush = 0; S.hygiene = clamp(S.hygiene + 5);
+    setTimeout(praise, 500); say('أسنانه نظيفة! حان وقت الطعام 🥕');
+  } else if (S.routine === 'brush') say('استمر في الفرك.');
+  else { S.brush = 0; say('أسنان النمر نظيفة.'); }
   save(); paintStats(); think();
 }
 function toilet() {
   if (S.toilet < 30 && S.sleepReady) { SFX.no(); say('لا يحتاج النمر المرحاض الآن.'); return; }
   S.toilet = 0; S.sleepReady = true; SFX.flush(); fx('🚽', 'poof', 50, 60); anim('hop'); setTimeout(praise, 600);
-  say('ارتاح النمر!'); save(); think();
+  S.routine = 'soap'; S.lather = 0; S.brush = 0;
+  say('ارتاح النمر! الآن الصابون 🧼'); save(); think();
 }
 
 function tick() {
