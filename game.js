@@ -31,7 +31,7 @@ function task() {
     return S.hunger >= 100 ? ['😋', 'شبع النمر'] : ['🥕', 'أطعمه جزرة'];
   }
   if (mode === 'bath') return S.hygiene >= 100 ? ['✨', 'النمر نظيف'] : ['🧼', 'افرك بالصابون'];
-  if (mode === 'clean') return S.dirt.length ? ['💩', 'أزل البقع'] : ['✨', 'البيت نظيف'];
+  if (mode === 'clean') return S.dirt.length ? ['🗑️', 'ارمِ القمامة في السلة'] : ['✨', 'البيت نظيف'];
   if (mode === 'sleep') return ['🌙', 'أطفئ الضوء لينام'];
   return null;
 }
@@ -72,6 +72,41 @@ function eat() {
 function hearts(n = 3) {
   for (let i = 0; i < n; i++) setTimeout(() => fx('❤️', 'heart', 38 + Math.random() * 24, 22 + Math.random() * 12), i * 120);
 }
+// ---------- القمامة والسلة ----------
+const BOTTLE = '<svg viewBox="0 0 40 52" aria-hidden="true"><path d="M12 24 L14 14 L17 18 L19 9 L22 17 L25 11 L28 22 L30 24 L30 46 Q30 50 26 50 L16 50 Q12 50 12 46 Z" fill="#4caf6a" stroke="#1f5a34" stroke-width="2" stroke-linejoin="round"/><path d="M16 28 V44" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".55"/><path d="M22 30 L19 36 L23 40 L20 47" fill="none" stroke="#e9fff0" stroke-width="1.8" stroke-linejoin="round"/><path d="M33 46 L37 42 L38 48 Z" fill="#4caf6a" stroke="#1f5a34" stroke-width="1.5" stroke-linejoin="round"/></svg>';
+const JUNK = ['🧻', '🧃', '📜', BOTTLE];
+const JUNK_NAMES = ['منديل', 'علبة عصير', 'ورقة قديمة', 'زجاجة مكسورة'];
+const junk = k => JUNK[k % JUNK.length];
+const BIN = '<svg viewBox="0 0 64 76" aria-hidden="true"><g class="lid"><rect x="6" y="8" width="52" height="8" rx="4" fill="#7d909a" stroke="#4d5c64" stroke-width="2"/><rect x="24" y="2" width="16" height="8" rx="3" fill="#7d909a" stroke="#4d5c64" stroke-width="2"/></g><path d="M10 20 H54 L50 70 Q50 74 46 74 H18 Q14 74 14 70 Z" fill="#9fb2ba" stroke="#4d5c64" stroke-width="2" stroke-linejoin="round"/><path d="M24 28 V66 M32 28 V66 M40 28 V66" stroke="#4d5c64" stroke-width="2.5" stroke-linecap="round" opacity=".55"/></svg>';
+
+// تفتح سلة قمامة بجانب العنصر ويدخل فيها ثم تُغلق وتختفي
+function toBin(d) {
+  const fxl = $('#fx'), W = fxl.clientWidth, H = fxl.clientHeight;
+  const below = d.y < 55, bx = d.x / 100 * W, by = (d.y + (below ? 15 : -15)) / 100 * H;
+  const bin = document.createElement('div');
+  bin.className = 'bin'; bin.innerHTML = BIN;
+  bin.style.left = bx + 'px'; bin.style.top = by + 'px';
+  const it = document.createElement('div');
+  it.className = 'junk'; it.innerHTML = junk(d.k);
+  it.style.left = d.x / 100 * W + 'px'; it.style.top = d.y / 100 * H + 'px';
+  fxl.append(bin, it);
+  const lid = bin.querySelector('.lid');
+  const T = { fill: 'forwards', easing: 'ease-in-out' };
+  bin.animate([{ opacity: 0, transform: 'translate(-50%,-50%) scale(.3)' }, { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }], { duration: 220, fill: 'forwards', easing: 'cubic-bezier(.3,1.5,.5,1)' });
+  lid.animate([{ transform: 'rotate(0)' }, { transform: 'rotate(-62deg) translateY(-3px)' }], { delay: 180, duration: 220, ...T });
+  const dx = bx - d.x / 100 * W, dy = by - d.y / 100 * H - 26;
+  it.animate([
+    { transform: 'translate(-50%,-50%) scale(1) rotate(0)', offset: 0 },
+    { transform: `translate(calc(-50% + ${dx * .5}px),calc(-50% + ${Math.min(dy, 0) - 40}px)) scale(1.1) rotate(160deg)`, offset: .5 },
+    { transform: `translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.35) rotate(340deg)`, opacity: 0.2, offset: 1 }
+  ], { delay: 380, duration: 480, ...T });
+  lid.animate([{ transform: 'rotate(-62deg) translateY(-3px)' }, { transform: 'rotate(0)' }], { delay: 900, duration: 200, ...T });
+  bin.animate([{ transform: 'translate(-50%,-50%) scale(1)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1.12)', opacity: 1, offset: .3 }, { transform: 'translate(-50%,-50%) scale(.3)', opacity: 0 }], { delay: 1150, duration: 260, fill: 'forwards' });
+  setTimeout(() => fx('✨', 'poof', d.x, d.y + (below ? 15 : -15)), 1000);
+  setTimeout(praise, 950);
+  setTimeout(() => { bin.remove(); it.remove(); }, 1450);
+}
+
 let decorKey = '';
 function paintDecor() {
   if (mode === decorKey) return; decorKey = mode;
@@ -164,15 +199,20 @@ function render() {
   if (mode === 'clean') {
     S.dirt.forEach((d, i) => {
       const e = document.createElement('button');
-      e.className = 'dirt'; e.textContent = '💩';
-      e.setAttribute('aria-label', 'بقعة وسخ');
+      if (d.k == null) d.k = Math.floor(Math.random() * JUNK.length);
+      e.className = 'dirt'; e.innerHTML = junk(d.k);
+      e.setAttribute('aria-label', JUNK_NAMES[d.k]);
       e.style.left = d.x + '%'; e.style.top = d.y + '%';
-      e.onclick = () => { fx('✨', 'poof', d.x, d.y); S.dirt.splice(i, 1); praise(); save(); paintStats(); render(); say(S.dirt.length ? 'أحسنت، تابع.' : 'البيت نظيف!'); };
+      e.onclick = () => {
+        toBin(d);
+        S.dirt.splice(i, 1); save(); paintStats(); render();
+        say(S.dirt.length ? 'أحسنت، تابع.' : 'البيت نظيف!');
+      };
       layer.appendChild(e);
     });
     const h = document.createElement('p');
     h.className = 'hint';
-    h.textContent = `💩 ${S.dirt.length}`;
+    h.textContent = `🗑️ ${S.dirt.length}`;
     panel.appendChild(h);
   }
   if (mode === 'sleep') {
@@ -318,7 +358,7 @@ function tick() {
 
   if (sl && S.energy >= 100) { S.sleeping = false; say('صباح الخير! النمر مليء بالطاقة.'); redraw = true; }
   if (!sl && Math.random() < 0.08 && S.dirt.length < 8) {
-    S.dirt.push({ x: 8 + Math.random() * 84, y: 20 + Math.random() * 55 });
+    S.dirt.push({ x: 8 + Math.random() * 84, y: 20 + Math.random() * 55, k: Math.floor(Math.random() * JUNK.length) });
     if (mode === 'clean') redraw = true;
   }
   S.plots.forEach(p => { if (p.s === 2 && Date.now() >= p.t) p.s = 3; });

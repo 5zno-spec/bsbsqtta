@@ -78,7 +78,7 @@ h1{width:fit-content; margin:0 auto; padding:0 16px; font-size:1.1rem; line-heig
 .layer{position:absolute; inset:0; pointer-events:none}
 .layer>*{pointer-events:auto}
 .dirt{
-  position:absolute; width:46px; height:46px; border:0; background:none; font-size:2rem; cursor:pointer;
+  position:absolute; width:56px; height:56px; border:0; background:none; font-size:2.6rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
   transform:translate(-50%,-50%); line-height:1;
 }
 .foam{position:absolute; font-size:2rem; pointer-events:none; animation:float 1.2s ease-out forwards}
@@ -295,3 +295,11 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
   transform:rotate(45deg); border-radius:0 0 4px 0}
 .tip.on{opacity:1; transform:translateX(-50%) translateY(0) scale(1)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tip{background:rgba(34,48,42,.7); border-color:rgba(255,255,255,.35)}}
+
+/* القمامة والسلة */
+.dirt svg,.junk svg{width:1em; height:1.3em; filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.dirt{filter:drop-shadow(0 2px 2px rgba(0,0,0,.18))}
+.junk{position:absolute; transform:translate(-50%,-50%); font-size:2.6rem; line-height:1; width:56px; height:56px; display:flex; align-items:center; justify-content:center; pointer-events:none; z-index:3}
+.bin{position:absolute; width:62px; height:74px; transform:translate(-50%,-50%); opacity:0; pointer-events:none; z-index:2; filter:drop-shadow(0 4px 4px rgba(0,0,0,.28))}
+.bin svg{width:100%; height:100%; overflow:visible}
+.bin .lid{transform-box:fill-box; transform-origin:left bottom}
