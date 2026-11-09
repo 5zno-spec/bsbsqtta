@@ -1,4 +1,4 @@
-# يوم النمر
+# نمور النشيط
 
 لعبة أنشطة يومية: زراعة، أكل، استحمام، تنظيف، نوم. موقع ثابت لا يحتاج بناءً.
 
@@ -12,7 +12,7 @@
 ```
 git init
 git add .
-git commit -m "يوم النمر"
+git commit -m "نمور النشيط"
 git branch -M main
 git remote add origin https://github.com/اسم-المستخدم/اسم-المستودع.git
 git push -u origin main
