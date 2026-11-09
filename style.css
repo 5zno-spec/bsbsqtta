@@ -306,3 +306,5 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 .bin{position:absolute; width:62px; height:74px; transform:translate(-50%,-50%); opacity:0; pointer-events:none; z-index:2; filter:drop-shadow(0 4px 4px rgba(0,0,0,.28))}
 .bin svg{width:100%; height:100%; overflow:visible}
 .bin .lid{transform-box:fill-box; transform-origin:left bottom}
+/* مشي النمر إلى موضع الضغط في الحمام: بلا تجوّل stroll كي لا يقفز left */
+.actor.walk.go{animation:none}

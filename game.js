@@ -2,13 +2,14 @@ const $ = s => document.querySelector(s);
 const KEY = 'tiger-day-v1';
 const clamp = v => Math.max(0, Math.min(100, v));
 const fresh = () => ({
-  hunger: 70, hygiene: 70, energy: 70, veg: 0,
+  hunger: 70, hygiene: 70, energy: 70, veg: 0, toilet: 25, lather: 0,
   plots: [0, 1, 2].map(() => ({ s: 0, t: 0 })), // s: 0 فارغ، 1 مزروع، 2 ينمو، 3 جاهز
   dirt: [], sleeping: false
 });
 
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { S = fresh(); }
+S.toilet = S.toilet ?? 25; S.lather = S.lather ?? 0; // حقول جديدة لحفظ قديم
 let mode = S.sleeping ? 'sleep' : 'eat';
 const GROW_MS = 15000;
 
@@ -24,6 +25,7 @@ function say(t) { $('#msg').textContent = t; }
 function task() {
   if (S.sleeping) return null;
   if (S.wakeBath && S.hygiene < 100 && mode !== 'bath') return ['🛁', 'النمر يريد الاستحمام'];
+  if (mode !== 'bath' && S.toilet >= 80) return ['🚽', 'النمر يريد المرحاض'];
   if (mode === 'farm') {
     if (S.plots.some(p => p.s === 3)) return ['🥕', 'احصد الجزر'];
     if (needWater()) return ['🚿', 'اسقِ البذرة'];
@@ -34,7 +36,11 @@ function task() {
     if (S.veg < 1) return ['🌱', 'اذهب إلى المزرعة'];
     return S.hunger >= 100 ? ['😋', 'شبع النمر'] : ['🥕', 'أطعمه جزرة'];
   }
-  if (mode === 'bath') return S.hygiene >= 100 ? ['✨', 'النمر نظيف'] : ['🧼', 'افرك بالصابون'];
+  if (mode === 'bath') {
+    if (S.toilet >= 70) return ['🚽', 'النمر يحتاج المرحاض'];
+    if (S.hygiene >= 100 && S.lather <= 0) return ['✨', 'النمر نظيف'];
+    return S.lather >= 50 ? ['🚿', 'اشطفه بالماء'] : ['🧼', 'افرك بالصابون'];
+  }
   if (mode === 'clean') return S.dirt.length ? ['🗑️', 'ارمِ القمامة في السلة'] : ['✨', 'البيت نظيف'];
   if (mode === 'sleep') return ['🌙', 'أطفئ الضوء لينام'];
   return null;
@@ -219,9 +225,10 @@ function render() {
     b.onclick = feed; panel.appendChild(b);
   }
   if (mode === 'bath') {
-    const b = document.createElement('button');
-    b.className = 'act'; setAct(b, '🧼', 'افرك بالصابون');
-    b.onclick = scrub; panel.appendChild(b);
+    [['🧼', 'استحمام بالصابون', soap], ['🚿', 'غسل بالماء', rinse], ['🚽', 'المرحاض', toilet]].forEach(([ic, lb, fn]) => {
+      const b = document.createElement('button');
+      b.className = 'act'; setAct(b, ic, lb); b.onclick = fn; panel.appendChild(b);
+    });
   }
   if (mode === 'clean') {
     S.dirt.forEach((d, i) => {
@@ -362,25 +369,46 @@ function plotAction(i) {
 
 function feed() {
   if (S.veg < 1) return;
-  S.veg--; S.hunger = clamp(S.hunger + 30);
+  S.veg--; S.hunger = clamp(S.hunger + 30); S.toilet = clamp(S.toilet + 10);
   fx('🥕', 'fly'); eat();
   say(S.hunger >= 100 ? 'شبع النمر تمامًا!' : 'ممم، لذيذة!'); setTimeout(praise, 700);
   save(); paintStats(); render();
 }
 
-function scrub() {
+// احتياجات الحمام: الاستحمام بالصابون، ثم الغسل بالماء، والمرحاض
+function foam(ch, n, y0 = 30) { for (let i = 0; i < n; i++) fx(ch, 'foam', 25 + Math.random() * 50, y0 + Math.random() * 30); }
+function soap() {
+  S.lather = clamp(S.lather + 25); S.hygiene = clamp(S.hygiene + 5);
+  SFX.scrub(); anim('wiggle'); foam('🫧', 4);
+  if (S.hygiene >= 100) S.wakeBath = false;
+  say(S.lather >= 50 ? 'كثير من الرغوة! اشطفه بالماء 🚿' : 'استمر في الفرك.');
+  save(); paintStats(); think();
+}
+function rinse() {
+  SFX.water(); foam('💧', 6, 20);
+  if (S.lather <= 0) {
+    S.hygiene = clamp(S.hygiene + 2); say('اغسله بالصابون أولًا لينظف أكثر.');
+    save(); paintStats(); think(); return;
+  }
   const was = S.hygiene;
-  S.hygiene = clamp(S.hygiene + 8);
-  SFX.scrub(); if (was < 100 && S.hygiene >= 100) praise(); if (S.hygiene >= 100) S.wakeBath = false; anim('wiggle');
-  for (let i = 0; i < 4; i++) fx('🫧', 'foam', 25 + Math.random() * 50, 30 + Math.random() * 30);
-  say(S.hygiene >= 100 ? 'النمر نظيف ولامع!' : 'استمر في الفرك.');
-  save(); paintStats();
+  S.hygiene = clamp(S.hygiene + S.lather * 0.25); S.lather = 0;
+  anim('wiggle');
+  if (was < 100 && S.hygiene >= 100) praise();
+  if (S.hygiene >= 100) S.wakeBath = false;
+  say(S.hygiene >= 100 ? 'النمر نظيف ولامع!' : 'تم الشطف! كرّر الصابون لينظف أكثر.');
+  save(); paintStats(); think();
+}
+function toilet() {
+  if (S.toilet < 30) { SFX.no(); say('لا يحتاج النمر المرحاض الآن.'); return; }
+  S.toilet = 0; SFX.flush(); fx('🚽', 'poof', 50, 60); anim('hop'); setTimeout(praise, 600);
+  say('ارتاح النمر!'); save(); think();
 }
 
 function tick() {
   const sl = S.sleeping;
   S.hunger = clamp(S.hunger - (sl ? 0.1 : 0.35));
   S.hygiene = clamp(S.hygiene - (sl ? 0.05 : 0.2));
+  S.toilet = clamp(S.toilet + (sl ? 0.08 : 0.25));
   S.energy = clamp(S.energy + (sl ? 2 : -0.2));
   let redraw = false;
 
@@ -414,7 +442,7 @@ $('#stage').addEventListener('click', e => {
   const x = Math.max(half, Math.min(100 - half, (e.clientX - r.left) / r.width * 100));
   const y = Math.max(-3, Math.min(22, (1 - (e.clientY - r.top) / r.height) * 100 - 6));
   a.style.left = x.toFixed(1) + '%'; a.style.bottom = y.toFixed(1) + '%';
-  a.classList.add('walk'); clearTimeout(walkTimer); walkTimer = setTimeout(() => a.classList.remove('walk'), 520);
+  a.classList.add('walk', 'go'); clearTimeout(walkTimer); walkTimer = setTimeout(() => a.classList.remove('walk', 'go'), 520);
 });
 // القفز فقط عند الضغط على البطن
 $('#tiger').addEventListener('click', e => {

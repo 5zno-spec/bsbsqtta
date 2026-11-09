@@ -86,6 +86,7 @@ const SFX = (() => {
       tone(130, 0.14, 'sine', 0.35, 0.82, 70);                // سقوطها
       noise(0.08, 'lowpass', 600, 0.25, 0.9);                 // إغلاق الغطاء
     },
+    flush() { noise(1.2, 'bandpass', 1900, 0.3, 0, 280, 0.7); tone(230, 0.95, 'sine', 0.12, 0.1, 90); },
     done() { [N.C5, N.E5, N.G5, N.C6, N.E6].forEach((f, i) => tone(f, 0.22, 'triangle', 0.22, i * 0.09)); },
     // نوم
     sleep() { [N.G5, N.E5, N.D5, N.C5].forEach((f, i) => tone(f / 2, 0.55, 'sine', 0.2, i * 0.32)); },
