@@ -38,7 +38,7 @@ function think() {
 function anim(c) {
   const t = $('#tiger');
   t.classList.remove('hop', 'chew', 'wiggle'); void t.offsetWidth; t.classList.add(c);
-  setTimeout(() => t.classList.remove(c), 950);
+  setTimeout(() => t.classList.remove(c), c === 'hop' ? 1300 : 950);
 }
 const hop = () => anim('hop');
 function fx(txt, cls, x, y) {
@@ -127,7 +127,7 @@ function render() {
       e.className = 'dirt'; e.textContent = '💩';
       e.setAttribute('aria-label', 'بقعة وسخ');
       e.style.left = d.x + '%'; e.style.top = d.y + '%';
-      e.onclick = () => { fx('✨', 'poof', d.x, d.y); S.dirt.splice(i, 1); hop(); save(); paintStats(); render(); say(S.dirt.length ? 'أحسنت، تابع.' : 'البيت نظيف!'); };
+      e.onclick = () => { fx('✨', 'poof', d.x, d.y); S.dirt.splice(i, 1); save(); paintStats(); render(); say(S.dirt.length ? 'أحسنت، تابع.' : 'البيت نظيف!'); };
       layer.appendChild(e);
     });
     const h = document.createElement('p');
@@ -248,7 +248,7 @@ function plotAction(i) {
   if (p.s === 0) { plantSeed(); return; }
   if (p.s === 1) { say('تحتاج ماء. اضغط على الرشاش 🚿 داخل الفقاعات.'); ensureBubbles(); return; }
   if (p.s === 2) { say('ما زالت تنمو.'); return; }
-  p.s = 0; S.veg++; hop(); fx('✨', 'poof', PLOT_X[i], 78);
+  p.s = 0; S.veg++; fx('✨', 'poof', PLOT_X[i], 78);
   say('حصدت جزرة!'); save(); render();
 }
 
@@ -269,7 +269,6 @@ function scrub() {
 
 function tick() {
   const sl = S.sleeping;
-  if (!sl && mode !== 'farm' && Math.random() < 0.1) hop();
   S.hunger = clamp(S.hunger - (sl ? 0.1 : 0.35));
   S.hygiene = clamp(S.hygiene - (sl ? 0.05 : 0.2));
   S.energy = clamp(S.energy + (sl ? 2 : -0.2));
@@ -292,7 +291,13 @@ $('#stage').addEventListener('pointermove', e => {
   const r = $('#stage').getBoundingClientRect();
   $('#tiger').style.setProperty('--tilt', (((e.clientX - r.left) / r.width - 0.5) * 8).toFixed(1) + 'deg');
 });
-$('#tiger').addEventListener('click', () => { hop(); hearts(2); });
+// القفز فقط عند الضغط على البطن
+$('#tiger').addEventListener('click', e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+  if (x < 0.34 || x > 0.66 || y < 0.48 || y > 0.84) return;
+  hop(); hearts(2);
+});
 setMode(mode);
 paintStats();
 setInterval(tick, 1000);

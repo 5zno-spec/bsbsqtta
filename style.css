@@ -38,7 +38,7 @@ h1{width:fit-content; margin:0 auto; padding:0 16px; font-size:1.1rem; line-heig
 .tiger{display:block;height:100%;width:auto;user-select:none;-webkit-user-drag:none;transform-origin:50% 100%;
   filter:drop-shadow(0 8px 0 rgba(0,0,0,.12));rotate:var(--tilt,0deg);transition:rotate .25s;animation:breathe 2.6s ease-in-out infinite}
 .actor.walk .tiger{animation:bob .55s ease-in-out infinite}
-.tiger.hop{animation:hop .45s ease-out}
+.tiger.hop{animation:hop 1.1s ease-in-out}
 .tiger.chew{animation:chew .9s ease-in-out}
 .tiger.wiggle{animation:wiggle .5s ease-in-out}
 .stage.night .tiger{filter:brightness(.55);animation:breathe 5.5s ease-in-out infinite}
