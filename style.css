@@ -125,7 +125,7 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 
 .tiger img{position:absolute;inset:0}
 .p-arm{transform-origin:33.7% 51.3%;animation:wave 1.4s ease-in-out infinite}
-.p-tail{transform-origin:68.8% 75.7%;animation:tailShake .7s ease-in-out infinite}
+.p-tail{transform-origin:68.8% 75.7%;animation:tailShake 2s ease-in-out infinite}
 .p-legL{transform-origin:39.1% 83%}
 .p-legR{transform-origin:61.5% 83%}
 .actor.walk .p-legL{animation:stepL .55s ease-in-out infinite}
