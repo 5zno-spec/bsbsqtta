@@ -278,7 +278,7 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
   background:url("bg/bath.jpg") var(--bx,50%) bottom / max(150%,118vh) auto no-repeat,#e2b284;
   background:url("bg/bath.jpg") var(--bx,50%) bottom / max(150%,118dvh) auto no-repeat,#e2b284}
 .stage[data-mode=bath].panning{cursor:grabbing}
-.stage[data-mode=bath] .actor{height:62%; bottom:-3%}
+.stage[data-mode=bath] .actor{height:62%; bottom:-8%}
 
 /* فقاعة المدح */
 .praise{position:absolute; left:74%; top:4%; z-index:6; pointer-events:none; padding:8px 20px; border-radius:999px;
