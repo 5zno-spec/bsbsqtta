@@ -344,3 +344,6 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 .bin .lid{transform-box:fill-box; transform-origin:left bottom}
 /* مشي النمر إلى موضع الضغط في الحمام: بلا تجوّل stroll كي لا يقفز left */
 .actor.walk.go{animation:none}
+/* أيقونة الصنبور: في منتصف الزر تمامًا وأكبر قليلًا */
+.act em{display:flex;align-items:center;justify-content:center}
+.act em .ico[src$="faucet.png"]{height:1.25em;margin:0 auto}
