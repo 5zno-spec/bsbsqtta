@@ -283,6 +283,7 @@ function render() {
       layer.appendChild(z);
     }
   }
+  panel.dataset.n = panel.children.length; // عدد عناصر اللوحة: يضيّق CSS الأزرار لتتسع في العرض
   think();
 }
 
