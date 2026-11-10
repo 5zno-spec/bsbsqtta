@@ -13,6 +13,16 @@ S.toilet = S.toilet ?? 25; S.lather = S.lather ?? 0; S.work = S.work ?? 0; // ح
 S.brush = S.brush ?? 0; S.routine = S.routine ?? null;
 // تسلسل العناية: المرحاض ← الصابون ← الماء ← الفرشاة ← الطعام (routine: soap | rinse | brush | food | null)
 const routineBusy = () => S.routine === 'soap' || S.routine === 'rinse' || S.routine === 'brush';
+// تسلسل اليوم: الاستيقاظ ← حمام بتفاصيله (مرحاض، صابون، ماء، فرشاة) ← طعام ← تنظيف ← زرع ← حمام ← طعام ← تنظيف ← نوم
+// S.step رقم الخطوة الحالية. بعد إنجازها يفكّر النمر في التالية أينما كان اللاعب، وبعد النوم يبدأ يوم جديد من الاستيقاظ
+const DAY = ['bath', 'food', 'clean', 'farm', 'bath', 'food', 'clean', 'sleep'];
+S.step = S.step ?? (S.sleeping ? DAY.length - 1 : S.routine === 'food' ? 1 : 0);
+const step = () => DAY[S.step] || DAY[0];
+function done(kind) {
+  if (step() !== kind) return;
+  if (kind === 'food' && S.routine === 'food') S.routine = null;
+  S.step = Math.min(S.step + 1, DAY.length - 1); save(); think();
+}
 let mode = S.sleeping ? 'sleep' : 'eat';
 const GROW_MS = 15000;
 const APPLES_PER_TREE = 3; // كم تفاحة تعطي الشجرة عند القطف
@@ -34,40 +44,44 @@ const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch
 const room = () => clamp(100 - S.dirt.length * 12);
 
 // عند الاستيقاظ أول ما يريده النمر هو الحمام (حتى تكتمل نظافته)
-function wakeUp() { S.wakeBath = S.hygiene < 100; S.toilet = 100; S.sleepReady = false; }
+function wakeUp() { S.wakeBath = S.hygiene < 100; S.toilet = 100; S.sleepReady = false; S.step = 0; }
 
 function say(t) { $('#msg').textContent = t; }
 
 // المهمة المطلوبة من اللاعب الآن: صورة فقط في فقاعة تفكير فوق رأس النمر
 function task() {
   if (S.sleeping) return null;
-  if (mode !== 'bath' && S.toilet >= 80) return ['🚽', 'النمر يريد المرحاض'];
-  if (S.wakeBath && S.hygiene < 100 && mode !== 'bath') return ['🛁', 'النمر يريد الاستحمام'];
-  if (needShower() && mode !== 'bath') return [SHOWER, 'تعب النمر من العمل ويريد دشًا'];
+  const st = step();
+  // النوم: يحتاج المرحاض أولًا (في أي شاشة)، ثم إطفاء الضوء في غرفة النوم
+  if (st === 'sleep') {
+    if (!S.sleepReady) return ['🚽', 'يحتاج المرحاض قبل النوم'];
+    return mode === 'sleep' ? ['🌙', 'أطفئ الضوء لينام'] : ['🌙', 'حان وقت النوم'];
+  }
+  // الطعام بلا تفاح: المطلوب المزرعة (زرع ثم سقي ثم قطف) قبل الأكل
+  const noApple = st === 'food' && S.veg < 1;
+  const here = noApple ? 'farm' : { bath: 'bath', food: 'eat', clean: 'clean', farm: 'farm' }[st];
+  if (mode !== here) { // النمر ليس في مكان الخطوة: يفكّر في الخطوة التالية بدل تكرار ما انتهى
+    if (st === 'bath') return ['🛁', 'حان وقت الحمام'];
+    if (noApple) return ['🌱', 'اذهب إلى المزرعة'];
+    if (st === 'food') return [APPLE, 'حان وقت الطعام'];
+    if (st === 'clean') return ['🗑️', 'حان وقت التنظيف'];
+    return [SEED, 'حان وقت الزرع'];
+  }
   if (mode === 'farm') {
     if (S.plots.some(p => p.s === 3)) return [APPLE, 'اقطف التفاح'];
     if (needWater()) return [CAN, 'اسقِ البذرة'];
     if (S.plots.some(p => p.s === 2)) return ['⏳', 'انتظر النبتة تنمو'];
     return [SEED, 'ازرع البذرة'];
   }
-  if (mode === 'eat') {
-    if (routineBusy()) return ['🛁', 'اغسله أولًا في الحمام'];
-    if (S.veg < 1) return ['🌱', 'اذهب إلى المزرعة'];
-    return S.hunger >= 100 ? ['😋', 'شبع النمر'] : [APPLE, 'أطعمه تفاحة'];
-  }
+  if (mode === 'eat') return [APPLE, 'أطعمه تفاحة'];
   if (mode === 'bath') {
-    if (S.toilet >= 70) return ['🚽', 'النمر يحتاج المرحاض'];
-    if (needShower() && !routineBusy()) return [SHOWER, 'خذ دشًا بعد العمل'];
     if (S.routine === 'soap') return ['🧼', 'افرك بالصابون'];
     if (S.routine === 'rinse') return [FAUCET, 'اشطفه بالماء'];
     if (S.routine === 'brush') return ['🪥', 'نظّف أسنانه بالفرشاة'];
-    if (S.routine === 'food') return [APPLE, 'حان وقت الطعام'];
-    if (S.hygiene >= 100 && S.lather <= 0) return ['✨', 'النمر نظيف'];
-    return S.lather >= 50 ? [FAUCET, 'اشطفه بالماء'] : ['🧼', 'افرك بالصابون'];
+    if (needShower()) return [SHOWER, 'خذ دشًا بعد العمل'];
+    return ['🚽', 'ابدأ بالمرحاض'];
   }
-  if (mode === 'clean') return S.dirt.length ? ['🗑️', 'ارمِ القمامة في السلة'] : ['✨', 'البيت نظيف'];
-  if (mode === 'sleep') return S.sleepReady ? ['🌙', 'أطفئ الضوء لينام'] : ['🚽', 'يحتاج المرحاض قبل النوم'];
-  return null;
+  return S.dirt.length ? ['🗑️', 'ارمِ القمامة في السلة'] : ['✨', 'البيت نظيف'];
 }
 function think() {
   const el = $('#think'), t = task();
@@ -261,7 +275,7 @@ function render() {
       e.onclick = () => {
         SFX.grab(); toBin(d);
         if (S.dirt.length === 1) setTimeout(SFX.done, 1500);
-        work(); S.dirt.splice(i, 1); save(); paintStats(); render();
+        work(); S.dirt.splice(i, 1); if (!S.dirt.length) done('clean'); save(); paintStats(); render();
         say(S.dirt.length ? 'أحسنت، تابع.' : 'البيت نظيف!');
       };
       layer.appendChild(e);
@@ -396,7 +410,7 @@ function plotAction(i) {
   if (p.s === 0) { plantSeed(); return; }
   if (p.s === 1) { say('تحتاج ماء. اضغط على الدورق داخل الفقاعات.'); ensureBubbles(); return; }
   if (p.s === 2) { say('ما زالت تنمو.'); return; }
-  p.s = 0; S.veg += APPLES_PER_TREE; SFX.harvest(); work(); fx('✨', 'poof', PLOT_X[i], 70);
+  p.s = 0; S.veg += APPLES_PER_TREE; SFX.harvest(); work(); done('farm'); fx('✨', 'poof', PLOT_X[i], 70);
   for (let n = 0; n < APPLES_PER_TREE; n++) setTimeout(() => fx(APPLE, 'apple-up', PLOT_X[i] + (n - 1) * 7, 66), n * 140);
   say('قطفت التفاح من الشجرة!'); praise(); save(); render();
 }
@@ -431,6 +445,7 @@ function feed() {
   setTimeout(() => { S.toilet = Math.max(S.toilet, 85); save(); think(); }, 2300); // يحتاج المرحاض بعد الأكل
   fx(APPLE, 'fly'); eat();
   say(S.hunger >= 100 ? 'شبع النمر تمامًا!' : 'ممم، لذيذة!'); setTimeout(praise, 700);
+  done('food');
   save(); paintStats(); render();
 }
 
@@ -467,16 +482,17 @@ function brushUp() {
   SFX.scrub(); anim('wiggle'); foam('✨', 4, 25);
   if (S.routine === 'brush' && S.brush >= 50) {
     S.routine = 'food'; S.brush = 0; S.hygiene = clamp(S.hygiene + 5);
-    setTimeout(praise, 500); say('أسنانه نظيفة! حان وقت الطعام 🍎');
+    setTimeout(praise, 500); say('أسنانه نظيفة! حان وقت الطعام 🍎'); done('bath');
   } else if (S.routine === 'brush') say('استمر في الفرك.');
   else { S.brush = 0; say('أسنان النمر نظيفة.'); }
   save(); paintStats(); think();
 }
 function toilet() {
-  if (S.toilet < 30 && S.sleepReady) { SFX.no(); say('لا يحتاج النمر المرحاض الآن.'); return; }
+  const start = step() === 'bath' && !routineBusy(); // المرحاض يبدأ سلسلة الغسل في خطوة الحمام فقط، فلا يتكرر الغسل بعد الأكل
+  if (S.toilet < 30 && S.sleepReady && !start) { SFX.no(); say('لا يحتاج النمر المرحاض الآن.'); return; }
   S.toilet = 0; S.sleepReady = true; SFX.flush(); fx('🚽', 'poof', 50, 60); anim('hop'); setTimeout(praise, 600);
-  S.routine = 'soap'; S.lather = 0; S.brush = 0;
-  say('ارتاح النمر! الآن الصابون 🧼'); save(); think();
+  if (start) { S.routine = 'soap'; S.lather = 0; S.brush = 0; }
+  say(start ? 'ارتاح النمر! الآن الصابون 🧼' : 'ارتاح النمر!'); save(); think();
 }
 
 function tick() {
@@ -494,6 +510,9 @@ function tick() {
     if (mode === 'clean') redraw = true;
   }
   S.plots.forEach(p => { if (p.s === 2 && Date.now() >= p.t) p.s = 3; });
+  // خطوات تنتهي من تلقاء نفسها: البيت نظيف بلا قمامة، أو النمر شبعان
+  if (!sl && step() === 'clean' && !S.dirt.length) done('clean');
+  if (!sl && step() === 'food' && S.hunger >= 100) done('food');
   if (mode === 'farm') { paintPlots(); ensureBubbles(); }
 
   save(); paintStats(); think();
