@@ -13,14 +13,16 @@ S.toilet = S.toilet ?? 25; S.lather = S.lather ?? 0; S.work = S.work ?? 0; // ح
 S.brush = S.brush ?? 0; S.routine = S.routine ?? null;
 // تسلسل العناية: المرحاض ← الصابون ← الماء ← الفرشاة ← الطعام (routine: soap | rinse | brush | food | null)
 const routineBusy = () => S.routine === 'soap' || S.routine === 'rinse' || S.routine === 'brush';
-// تسلسل اليوم: الاستيقاظ ← حمام بتفاصيله (مرحاض، صابون، ماء، فرشاة) ← طعام ← تنظيف ← زرع ← حمام ← طعام ← تنظيف ← نوم
+// تسلسل اليوم: الاستيقاظ ← حمام بتفاصيله (مرحاض، صابون، ماء، فرشاة) ← طعام ← حمام ينظف نفسه ← تنظيف البيت ← زرع ← حمام ← طعام ← حمام ← تنظيف البيت ← نوم
 // S.step رقم الخطوة الحالية. بعد إنجازها يفكّر النمر في التالية أينما كان اللاعب، وبعد النوم يبدأ يوم جديد من الاستيقاظ
-const DAY = ['bath', 'food', 'clean', 'farm', 'bath', 'food', 'clean', 'sleep'];
-S.step = S.step ?? (S.sleeping ? DAY.length - 1 : S.routine === 'food' ? 1 : 0);
+const DAY = ['bath', 'food', 'bath', 'clean', 'farm', 'bath', 'food', 'bath', 'clean', 'sleep'];
+if (S.step == null) S.step = S.sleeping ? DAY.length - 1 : S.routine === 'food' ? 1 : 0;
+else if (S.dayV !== 2) S.step = [0, 1, 3, 4, 5, 6, 8, 9][S.step] ?? 0; // حفظ بالتسلسل القديم (٨ خطوات)
+S.dayV = 2;
 const step = () => DAY[S.step] || DAY[0];
 function done(kind) {
   if (step() !== kind) return;
-  if (kind === 'food' && S.routine === 'food') S.routine = null;
+  if ((kind === 'food' || kind === 'bath') && S.routine === 'food') S.routine = null;
   S.step = Math.min(S.step + 1, DAY.length - 1); save(); think();
 }
 let mode = S.sleeping ? 'sleep' : 'eat';
@@ -482,7 +484,7 @@ function brushUp() {
   SFX.scrub(); anim('wiggle'); foam('✨', 4, 25);
   if (S.routine === 'brush' && S.brush >= 50) {
     S.routine = 'food'; S.brush = 0; S.hygiene = clamp(S.hygiene + 5);
-    setTimeout(praise, 500); say('أسنانه نظيفة! حان وقت الطعام 🍎'); done('bath');
+    setTimeout(praise, 500); say(DAY[S.step + 1] === 'food' ? 'أسنانه نظيفة! حان وقت الطعام 🍎' : 'أسنانه نظيفة! ✨'); done('bath');
   } else if (S.routine === 'brush') say('استمر في الفرك.');
   else { S.brush = 0; say('أسنان النمر نظيفة.'); }
   save(); paintStats(); think();
