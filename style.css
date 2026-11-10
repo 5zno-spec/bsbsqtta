@@ -32,8 +32,8 @@ h1{width:fit-content; margin:0 auto; padding:0 16px; font-size:1.1rem; line-heig
 .stage[data-mode=clean]{--hz:calc(var(--hud) + var(--ph) * .62); background:linear-gradient(#c9c3e8 0 var(--hz),#a77f58 var(--hz))}
 .stage[data-mode=sleep]{--hz:calc(var(--hud) + var(--ph) * .62); background:linear-gradient(#1b2450 0 var(--hz),#2b2f55 var(--hz))}
 
-.actor{position:absolute;left:50%;bottom:3%;height:min(82%,112vw);transform:translateX(-50%)}
-.stage[data-mode=bath] .actor{height:68%;bottom:8%}
+.actor{position:absolute;left:50%;bottom:3%;height:min(74%,100vw);transform:translateX(-50%)}
+.stage[data-mode=bath] .actor{height:62%;bottom:8%}
 .actor.walk{animation:stroll 12s ease-in-out infinite}
 .tiger{display:block;height:100%;width:auto;user-select:none;-webkit-user-drag:none;transform-origin:50% 100%;
   filter:drop-shadow(0 8px 0 rgba(0,0,0,.12));rotate:var(--tilt,0deg);transition:rotate .25s;animation:breathe 2.6s ease-in-out infinite}
@@ -136,7 +136,7 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 @keyframes tailShake{0%,100%{transform:rotate(-4deg)}25%{transform:rotate(3deg)}50%{transform:rotate(-3deg)}75%{transform:rotate(4deg)}}
 @keyframes stepL{0%,100%{transform:rotate(-8deg)}50%{transform:rotate(8deg)}}
 @keyframes stepR{0%,100%{transform:rotate(8deg)}50%{transform:rotate(-8deg)}}
-.stage[data-mode=farm] .actor{height:min(52%,100vw);bottom:5%;left:70%}
+.stage[data-mode=farm] .actor{height:min(47%,92vw);bottom:5%;left:70%}
 
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ink:#e6efe9;--forest:#8fd1a4;--paper:#22302a;--track:#34463d}
 :root:not([data-theme="light"]) body{background:#141d19}
@@ -217,7 +217,7 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 }
 
 /* فقاعة التفكير فوق رأس النمر: دائرة فيها صورة المطلوب */
-.think{position:absolute; left:50%; bottom:97%; transform:translateX(-50%); z-index:4; pointer-events:none;
+.think{position:absolute; left:50%; bottom:calc(97% + 30px); transform:translateX(-50%); z-index:4; pointer-events:none;
   width:68px; height:68px; border-radius:50%; display:flex; align-items:center; justify-content:center;
   background:#fff; border:2.5px solid var(--forest); box-shadow:0 3px 0 rgba(31,77,58,.18);
   font-size:2.2rem; line-height:1; animation:thinkFloat 3s ease-in-out infinite}
@@ -278,7 +278,7 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
   background:url("bg/bath.jpg") var(--bx,50%) bottom / max(150%,118vh) auto no-repeat,#e2b284;
   background:url("bg/bath.jpg") var(--bx,50%) bottom / max(150%,118dvh) auto no-repeat,#e2b284}
 .stage[data-mode=bath].panning{cursor:grabbing}
-.stage[data-mode=bath] .actor{height:68%; bottom:-3%}
+.stage[data-mode=bath] .actor{height:62%; bottom:-3%}
 
 /* فقاعة المدح */
 .praise{position:absolute; left:74%; top:4%; z-index:6; pointer-events:none; padding:8px 20px; border-radius:999px;
