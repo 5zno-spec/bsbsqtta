@@ -9,7 +9,7 @@ const fresh = () => ({
 
 let S;
 try { S = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch { S = fresh(); }
-S.toilet = S.toilet ?? 25; S.lather = S.lather ?? 0; // حقول جديدة لحفظ قديم
+S.toilet = S.toilet ?? 25; S.lather = S.lather ?? 0; S.work = S.work ?? 0; // حقول جديدة لحفظ قديم
 S.brush = S.brush ?? 0; S.routine = S.routine ?? null;
 // تسلسل العناية: المرحاض ← الصابون ← الماء ← الفرشاة ← الطعام (routine: soap | rinse | brush | food | null)
 const routineBusy = () => S.routine === 'soap' || S.routine === 'rinse' || S.routine === 'brush';
@@ -21,7 +21,11 @@ const pic = n => `<img class="ico" src="apple/${n}.png" alt="" draggable="false"
 const APPLE = pic('apple'), SEED = pic('seed');
 // صور الأدوات (مجلد items): الدش للحمام، الدورق لسقي الزرع، والعلبة والمنديل من قمامة البيت
 const item = n => `<img class="ico" src="items/${n}.png" alt="" draggable="false">`;
-const SHOWER = item('shower'), CAN = item('can'), TISSUE = item('tissue'), JUICE = item('juice');
+const SHOWER = item('shower'), CAN = item('can'), TISSUE = item('tissue'), JUICE = item('juice'), FAUCET = item('faucet');
+// الدش: يظهر خيار الدش في الحمام بعد هذا العدد من أعمال الزرع والتنظيف (زرع، سقي، قطف، رمي قمامة)
+const SHOWER_AFTER = 4;
+const needShower = () => (S.work || 0) >= SHOWER_AFTER;
+let showering = false;
 const PAPER = item('paper'), GLASS = item('glass');
 const STAGES = ['', 'seed', 'sprout', 'tree'];                    // بحسب حالة الحفرة s
 const growStage = prog => prog < 1 / 3 ? 'sprout' : prog < 2 / 3 ? 'plant' : 'blossom'; // أثناء النمو (s = 2)
@@ -39,6 +43,7 @@ function task() {
   if (S.sleeping) return null;
   if (mode !== 'bath' && S.toilet >= 80) return ['🚽', 'النمر يريد المرحاض'];
   if (S.wakeBath && S.hygiene < 100 && mode !== 'bath') return ['🛁', 'النمر يريد الاستحمام'];
+  if (needShower() && mode !== 'bath') return [SHOWER, 'تعب النمر من العمل ويريد دشًا'];
   if (mode === 'farm') {
     if (S.plots.some(p => p.s === 3)) return [APPLE, 'اقطف التفاح'];
     if (needWater()) return [CAN, 'اسقِ البذرة'];
@@ -52,12 +57,13 @@ function task() {
   }
   if (mode === 'bath') {
     if (S.toilet >= 70) return ['🚽', 'النمر يحتاج المرحاض'];
+    if (needShower() && !routineBusy()) return [SHOWER, 'خذ دشًا بعد العمل'];
     if (S.routine === 'soap') return ['🧼', 'افرك بالصابون'];
-    if (S.routine === 'rinse') return [SHOWER, 'اشطفه بالماء'];
+    if (S.routine === 'rinse') return [FAUCET, 'اشطفه بالماء'];
     if (S.routine === 'brush') return ['🪥', 'نظّف أسنانه بالفرشاة'];
     if (S.routine === 'food') return [APPLE, 'حان وقت الطعام'];
     if (S.hygiene >= 100 && S.lather <= 0) return ['✨', 'النمر نظيف'];
-    return S.lather >= 50 ? [SHOWER, 'اشطفه بالماء'] : ['🧼', 'افرك بالصابون'];
+    return S.lather >= 50 ? [FAUCET, 'اشطفه بالماء'] : ['🧼', 'افرك بالصابون'];
   }
   if (mode === 'clean') return S.dirt.length ? ['🗑️', 'ارمِ القمامة في السلة'] : ['✨', 'البيت نظيف'];
   if (mode === 'sleep') return S.sleepReady ? ['🌙', 'أطفئ الضوء لينام'] : ['🚽', 'يحتاج المرحاض قبل النوم'];
@@ -66,7 +72,7 @@ function task() {
 function think() {
   const el = $('#think'), t = task();
   if (t) { if (el.dataset.k !== t[0]) { el.dataset.k = t[0]; el.innerHTML = t[0]; } el.setAttribute('aria-label', t[1]); }
-  el.hidden = !t;
+  el.hidden = !t || showering;
 }
 function anim(c) {
   const t = $('#tiger');
@@ -163,8 +169,6 @@ function paintDecor() {
   let h = '';
   if (mode === 'farm') h = '<span class="sun">☀️</span><span class="cloud" style="top:6%;animation-duration:40s">☁️</span><span class="cloud" style="top:18%;animation-duration:55s;animation-delay:-25s">☁️</span><span class="bfly">🦋</span>';
   if (mode === 'bath') {
-    for (let i = 0; i < 9; i++) h += `<span class="bub" style="left:${r(4, 92)}%;font-size:${r(16, 30)}px;animation-delay:-${r(0, 6)}s;animation-duration:${r(5, 8)}s">🫧</span>`;
-    for (let i = 0; i < 7; i++) h += `<span class="drop" style="left:${r(30, 70)}%;animation-delay:-${r(0, 1)}s">💧</span>`;
     h += `<span style="top:1%;left:44%;font-size:2.8rem">${SHOWER}</span>`;
   }
   if (mode === 'sleep') { h = '<span class="moon">🌙</span>'; for (let i = 0; i < 8; i++) h += `<span class="star" style="left:${r(5, 92)}%;top:${r(4, 50)}%;animation-delay:-${r(0, 2)}s">⭐</span>`; }
@@ -242,7 +246,7 @@ function render() {
     b.onclick = feed; panel.appendChild(b);
   }
   if (mode === 'bath') {
-    [['🚽', 'المرحاض', toilet], ['🧼', 'استحمام بالصابون', soap], [SHOWER, 'غسل بالماء', rinse], ['🪥', 'غسل بالفرشاة', brushUp]].forEach(([ic, lb, fn]) => {
+    [['🚽', 'المرحاض', toilet], ['🧼', 'استحمام بالصابون', soap], [FAUCET, 'غسل بالماء', rinse], ['🪥', 'غسل بالفرشاة', brushUp]].concat(needShower() ? [[SHOWER, 'دش للاستحمام', takeShower]] : []).forEach(([ic, lb, fn]) => {
       const b = document.createElement('button');
       b.className = 'act'; setAct(b, ic, lb); b.onclick = fn; panel.appendChild(b);
     });
@@ -257,7 +261,7 @@ function render() {
       e.onclick = () => {
         SFX.grab(); toBin(d);
         if (S.dirt.length === 1) setTimeout(SFX.done, 1500);
-        S.dirt.splice(i, 1); save(); paintStats(); render();
+        work(); S.dirt.splice(i, 1); save(); paintStats(); render();
         say(S.dirt.length ? 'أحسنت، تابع.' : 'البيت نظيف!');
       };
       layer.appendChild(e);
@@ -372,7 +376,7 @@ function water(i) {
   w.className = 'water'; w.style.left = PLOT_X[i] + '%'; w.style.top = '66%';
   w.innerHTML = `<span>${CAN}</span>` + '<b style="left:-4px">💧</b><b style="left:12px;animation-delay:.15s">💧</b><b style="left:28px;animation-delay:.3s">💧</b>';
   $('#fx').appendChild(w); setTimeout(() => w.remove(), 1500);
-  SFX.water(); p.s = 2; p.t = Date.now() + GROW_MS;
+  SFX.water(); p.s = 2; p.t = Date.now() + GROW_MS; work();
   if (!needWater()) $('#bubbles').innerHTML = '';
   say('سقيت البذرة فنبتت! انتظر لتكبر.'); praise();
   save(); render();
@@ -381,7 +385,7 @@ function water(i) {
 function plantSeed() {
   const i = S.plots.findIndex(p => p.s === 0);
   if (i < 0) { say('كل الأرض مزروعة. اسقِ البذور أو اقطف التفاح.'); SFX.no(); return; }
-  S.plots[i] = { s: 1, t: 0 }; SFX.seed();
+  S.plots[i] = { s: 1, t: 0 }; SFX.seed(); work();
   say('وقعت البذرة على الأرض.'); praise();
   save(); render();
   setTimeout(ensureBubbles, 600);
@@ -392,14 +396,36 @@ function plotAction(i) {
   if (p.s === 0) { plantSeed(); return; }
   if (p.s === 1) { say('تحتاج ماء. اضغط على الدورق داخل الفقاعات.'); ensureBubbles(); return; }
   if (p.s === 2) { say('ما زالت تنمو.'); return; }
-  p.s = 0; S.veg += APPLES_PER_TREE; SFX.harvest(); fx('✨', 'poof', PLOT_X[i], 70);
+  p.s = 0; S.veg += APPLES_PER_TREE; SFX.harvest(); work(); fx('✨', 'poof', PLOT_X[i], 70);
   for (let n = 0; n < APPLES_PER_TREE; n++) setTimeout(() => fx(APPLE, 'apple-up', PLOT_X[i] + (n - 1) * 7, 66), n * 140);
   say('قطفت التفاح من الشجرة!'); praise(); save(); render();
 }
 
+// العمل (زرع، سقي، قطف، رمي قمامة) يتعب النمر ويوسّخه قليلًا، وبعد عدّة أعمال يظهر خيار الدش في الحمام
+function work() {
+  S.work = (S.work || 0) + 1; S.hygiene = clamp(S.hygiene - 2); paintStats();
+  if (S.work === SHOWER_AFTER) setTimeout(() => say('تعب النمر من العمل! اذهب إلى الحمام لتغسله بالدش 🚿'), 1300);
+}
+
+// الدش: يغسل النمر كله دفعة واحدة، ثم يختفي الخيار حتى يعمل النمر من جديد
+function takeShower() {
+  if (!needShower()) { SFX.no(); say('النمر لم يتعب بعد من العمل.'); return; }
+  S.work = 0; S.hygiene = 100; S.lather = 0; S.wakeBath = false; showering = true;
+  const a = $('#actor').getBoundingClientRect(), f = $('#fx').getBoundingClientRect(), r = (x, y) => (x + Math.random() * (y - x)).toFixed(1);
+  const sh = document.createElement('div');
+  sh.className = 'shower-fx'; sh.style.left = ((a.left + a.width / 2 - f.left) / f.width * 100).toFixed(1) + '%';
+  sh.style.top = ((a.top - f.top) / f.height * 100 - 7).toFixed(1) + '%';
+  sh.innerHTML = SHOWER + Array.from({ length: 16 }, () => `<i style="left:${r(4, 52)}%;animation-delay:-${r(0, .6)}s;--dx:${r(-14, 6)}px"></i>`).join('');
+  $('#fx').appendChild(sh);
+  SFX.water(); anim('wiggle'); foam('🫧', 5, 30); setTimeout(() => foam('🫧', 4, 40), 900);
+  setTimeout(() => { sh.remove(); showering = false; praise(); think(); }, 2400);
+  say('استحم النمر بالدش! صار نظيفًا ولامعًا.');
+  save(); paintStats(); render();
+}
+
 function feed() {
   if (S.veg < 1) return;
-  if (routineBusy()) { SFX.no(); say('اغسله أولًا: صابون ثم ماء ثم فرشاة 🧼🚿🪥'); return; }
+  if (routineBusy()) { SFX.no(); say('اغسله أولًا: صابون ثم ماء ثم فرشاة 🧼🚰🪥'); return; }
   S.routine = null;
   S.veg--; S.hunger = clamp(S.hunger + 30); S.sleepReady = false;
   setTimeout(() => { S.toilet = Math.max(S.toilet, 85); save(); think(); }, 2300); // يحتاج المرحاض بعد الأكل
@@ -415,7 +441,7 @@ function soap() {
   SFX.scrub(); anim('wiggle'); foam('🫧', 4);
   if (S.hygiene >= 100) S.wakeBath = false;
   if (S.routine === 'soap' && S.lather >= 50) S.routine = 'rinse';
-  say(S.lather >= 50 ? 'كثير من الرغوة! اشطفه بالماء 🚿' : 'استمر في الفرك.');
+  say(S.lather >= 50 ? 'كثير من الرغوة! اشطفه بالماء 🚰' : 'استمر في الفرك.');
   save(); paintStats(); think();
 }
 function rinse() {
@@ -435,7 +461,7 @@ function rinse() {
 }
 function brushUp() {
   if (S.routine === 'soap' || S.routine === 'rinse') {
-    SFX.no(); say(S.routine === 'soap' ? 'ابدأ بالصابون 🧼 ثم الماء 🚿' : 'اشطفه بالماء أولًا 🚿'); return;
+    SFX.no(); say(S.routine === 'soap' ? 'ابدأ بالصابون 🧼 ثم الماء 🚰' : 'اشطفه بالماء أولًا 🚰'); return;
   }
   S.brush = clamp(S.brush + 25);
   SFX.scrub(); anim('wiggle'); foam('✨', 4, 25);

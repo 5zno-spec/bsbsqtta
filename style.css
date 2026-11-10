@@ -314,6 +314,16 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 .panel[data-n="4"]{gap:8px}
 .panel[data-n="4"] .act{flex:1 1 0; min-width:0; max-width:96px; padding:8px 2px}
 .panel[data-n="4"] .act em{font-size:clamp(1.9rem,9vw,2.6rem)}
+.panel[data-n="5"]{gap:6px}
+.panel[data-n="5"] .act{flex:1 1 0; min-width:0; max-width:80px; padding:8px 2px}
+.panel[data-n="5"] .act em{font-size:clamp(1.5rem,7.4vw,2.2rem)}
+/* الدش: رأس الدش فوق النمر وقطرات تنزل عليه */
+.shower-fx{position:absolute;transform:translateX(-50%);z-index:7;pointer-events:none;font-size:3.4rem;line-height:1;animation:showerIn 2.4s ease-out forwards}
+.shower-fx .ico{display:block;height:1em;transform:rotate(-6deg)}
+.shower-fx i{position:absolute;top:74%;width:5px;height:15px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;opacity:0;
+  background:linear-gradient(#cfeeff,#4db3ff);animation:showerDrop .55s linear infinite}
+@keyframes showerIn{0%{opacity:0;transform:translate(-50%,-24px)}10%,88%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-12px)}}
+@keyframes showerDrop{0%{opacity:0;transform:translate(0,0)}15%{opacity:1}100%{opacity:0;transform:translate(var(--dx,0),300px)}}
 .tip{position:fixed; z-index:60; transform:translateX(-50%) translateY(6px) scale(.85); opacity:0; pointer-events:none;
   padding:7px 16px; border-radius:999px; white-space:nowrap; font-weight:800; font-size:.95rem; color:var(--ink);
   background:rgba(255,255,255,.62); border:1.5px solid rgba(255,255,255,.9);
