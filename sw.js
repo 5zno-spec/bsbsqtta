@@ -1,6 +1,6 @@
 // خدمة العمل بلا إنترنت: تخزّن ملفات اللعبة وتفتحها من الذاكرة
 // عند تعديل أي ملف ارفع رقم الإصدار هنا ليصل التحديث للاعبين
-const VERSION = 'v12';
+const VERSION = 'v13';
 const CACHE = 'nomor-alnashit-' + VERSION;
 const FONTS = 'nomor-alnashit-fonts';
 const CORE = [
@@ -8,6 +8,7 @@ const CORE = [
   'parts/base.png', 'parts/tail.png', 'parts/arm.png', 'parts/legL.png', 'parts/legR.png',
   'bg/bath.jpg',
   'apple/seed.png', 'apple/sprout.png', 'apple/plant.png', 'apple/blossom.png', 'apple/tree.png', 'apple/apple.png',
+  'items/shower.png', 'items/can.png', 'items/juice.png', 'items/tissue.png',
   'icons/logo.png', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png'
 ];
 

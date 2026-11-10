@@ -19,6 +19,9 @@ const APPLES_PER_TREE = 3; // كم تفاحة تعطي الشجرة عند ال�
 // صور مراحل نمو التفاحة (مجلد apple): بذرة ← فسيلة ← نبتة ← شجرة مزهرة ← شجرة مثمرة
 const pic = n => `<img class="ico" src="apple/${n}.png" alt="" draggable="false">`;
 const APPLE = pic('apple'), SEED = pic('seed');
+// صور الأدوات (مجلد items): الدش للحمام، الدورق لسقي الزرع، والعلبة والمنديل من قمامة البيت
+const item = n => `<img class="ico" src="items/${n}.png" alt="" draggable="false">`;
+const SHOWER = item('shower'), CAN = item('can'), TISSUE = item('tissue'), JUICE = item('juice');
 const STAGES = ['', 'seed', 'sprout', 'tree'];                    // بحسب حالة الحفرة s
 const growStage = prog => prog < 1 / 3 ? 'sprout' : prog < 2 / 3 ? 'plant' : 'blossom'; // أثناء النمو (s = 2)
 
@@ -37,7 +40,7 @@ function task() {
   if (S.wakeBath && S.hygiene < 100 && mode !== 'bath') return ['🛁', 'النمر يريد الاستحمام'];
   if (mode === 'farm') {
     if (S.plots.some(p => p.s === 3)) return [APPLE, 'اقطف التفاح'];
-    if (needWater()) return ['🚿', 'اسقِ البذرة'];
+    if (needWater()) return [CAN, 'اسقِ البذرة'];
     if (S.plots.some(p => p.s === 2)) return ['⏳', 'انتظر النبتة تنمو'];
     return [SEED, 'ازرع البذرة'];
   }
@@ -49,11 +52,11 @@ function task() {
   if (mode === 'bath') {
     if (S.toilet >= 70) return ['🚽', 'النمر يحتاج المرحاض'];
     if (S.routine === 'soap') return ['🧼', 'افرك بالصابون'];
-    if (S.routine === 'rinse') return ['🚿', 'اشطفه بالماء'];
+    if (S.routine === 'rinse') return [SHOWER, 'اشطفه بالماء'];
     if (S.routine === 'brush') return ['🪥', 'نظّف أسنانه بالفرشاة'];
     if (S.routine === 'food') return [APPLE, 'حان وقت الطعام'];
     if (S.hygiene >= 100 && S.lather <= 0) return ['✨', 'النمر نظيف'];
-    return S.lather >= 50 ? ['🚿', 'اشطفه بالماء'] : ['🧼', 'افرك بالصابون'];
+    return S.lather >= 50 ? [SHOWER, 'اشطفه بالماء'] : ['🧼', 'افرك بالصابون'];
   }
   if (mode === 'clean') return S.dirt.length ? ['🗑️', 'ارمِ القمامة في السلة'] : ['✨', 'البيت نظيف'];
   if (mode === 'sleep') return S.sleepReady ? ['🌙', 'أطفئ الضوء لينام'] : ['🚽', 'يحتاج المرحاض قبل النوم'];
@@ -99,7 +102,7 @@ function hearts(n = 3) {
 }
 // ---------- القمامة والسلة ----------
 const BOTTLE = '<svg viewBox="0 0 40 52" aria-hidden="true"><path d="M12 24 L14 14 L17 18 L19 9 L22 17 L25 11 L28 22 L30 24 L30 46 Q30 50 26 50 L16 50 Q12 50 12 46 Z" fill="#4caf6a" stroke="#1f5a34" stroke-width="2" stroke-linejoin="round"/><path d="M16 28 V44" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".55"/><path d="M22 30 L19 36 L23 40 L20 47" fill="none" stroke="#e9fff0" stroke-width="1.8" stroke-linejoin="round"/><path d="M33 46 L37 42 L38 48 Z" fill="#4caf6a" stroke="#1f5a34" stroke-width="1.5" stroke-linejoin="round"/></svg>';
-const JUNK = ['🧻', '🧃', '📜', BOTTLE];
+const JUNK = [TISSUE, JUICE, '📜', BOTTLE];
 const JUNK_NAMES = ['منديل', 'علبة عصير', 'ورقة قديمة', 'زجاجة مكسورة'];
 const junk = k => JUNK[k % JUNK.length];
 const BIN = '<svg viewBox="0 0 64 76" aria-hidden="true"><g class="lid"><rect x="6" y="8" width="52" height="8" rx="4" fill="#7d909a" stroke="#4d5c64" stroke-width="2"/><rect x="24" y="2" width="16" height="8" rx="3" fill="#7d909a" stroke="#4d5c64" stroke-width="2"/></g><path d="M10 20 H54 L50 70 Q50 74 46 74 H18 Q14 74 14 70 Z" fill="#9fb2ba" stroke="#4d5c64" stroke-width="2" stroke-linejoin="round"/><path d="M24 28 V66 M32 28 V66 M40 28 V66" stroke="#4d5c64" stroke-width="2.5" stroke-linecap="round" opacity=".55"/></svg>';
@@ -162,7 +165,7 @@ function paintDecor() {
   if (mode === 'bath') {
     for (let i = 0; i < 9; i++) h += `<span class="bub" style="left:${r(4, 92)}%;font-size:${r(16, 30)}px;animation-delay:-${r(0, 6)}s;animation-duration:${r(5, 8)}s">🫧</span>`;
     for (let i = 0; i < 7; i++) h += `<span class="drop" style="left:${r(30, 70)}%;animation-delay:-${r(0, 1)}s">💧</span>`;
-    h += '<span style="top:1%;left:46%;font-size:2rem">🚿</span>';
+    h += `<span style="top:1%;left:44%;font-size:2.8rem">${SHOWER}</span>`;
   }
   if (mode === 'sleep') { h = '<span class="moon">🌙</span>'; for (let i = 0; i < 8; i++) h += `<span class="star" style="left:${r(5, 92)}%;top:${r(4, 50)}%;animation-delay:-${r(0, 2)}s">⭐</span>`; }
   if (mode === 'clean') for (let i = 0; i < 4; i++) h += `<span class="star" style="left:${r(5, 92)}%;top:${r(8, 55)}%;animation-delay:-${r(0, 2)}s">✨</span>`;
@@ -239,7 +242,7 @@ function render() {
     b.onclick = feed; panel.appendChild(b);
   }
   if (mode === 'bath') {
-    [['🚽', 'المرحاض', toilet], ['🧼', 'استحمام بالصابون', soap], ['🚿', 'غسل بالماء', rinse], ['🪥', 'غسل بالفرشاة', brushUp]].forEach(([ic, lb, fn]) => {
+    [['🚽', 'المرحاض', toilet], ['🧼', 'استحمام بالصابون', soap], [SHOWER, 'غسل بالماء', rinse], ['🪥', 'غسل بالفرشاة', brushUp]].forEach(([ic, lb, fn]) => {
       const b = document.createElement('button');
       b.className = 'act'; setAct(b, ic, lb); b.onclick = fn; panel.appendChild(b);
     });
@@ -294,7 +297,7 @@ const needWater = () => S.plots.some(p => p.s === 1);
 
 function farmHint() {
   if (S.plots.some(p => p.s === 3)) return 'التفاح جاهز! المس الشجرة لتقطف التفاح.';
-  if (needWater()) return 'اضغط على الرشاش 🚿 داخل الفقاعات لتسقي البذرة.';
+  if (needWater()) return 'اضغط على الدورق داخل الفقاعات لتسقي البذرة.';
   if (S.plots.some(p => p.s === 2)) return 'الشجرة تنمو… انتظر قليلًا.';
   return 'اضغط على البذرة لتزرعها في الأرض.';
 }
@@ -336,10 +339,10 @@ function paintPlots() {
 function spawnBubble(kind) {
   const b = document.createElement('button');
   b.className = 'bubble'; b.dataset.kind = kind;
-  b.setAttribute('aria-label', kind === 'water' ? 'رشاش ماء' : 'صابونة');
+  b.setAttribute('aria-label', kind === 'water' ? 'دورق ماء' : 'صابونة');
   b.style.left = (4 + Math.random() * 42).toFixed(1) + '%';
   b.style.animationDuration = (6 + Math.random() * 2.5).toFixed(1) + 's';
-  b.innerHTML = `<i>${kind === 'water' ? '🚿' : '🧼'}</i>`;
+  b.innerHTML = `<i>${kind === 'water' ? CAN : '🧼'}</i>`;
   b.onclick = () => popBubble(b);
   b.addEventListener('animationend', e => { if (e.target === b) b.remove(); });
   $('#bubbles').appendChild(b);
@@ -358,7 +361,7 @@ function popBubble(b) {
   const x = (r.left + r.width / 2 - sr.left) / sr.width * 100;
   const y = (r.top + r.height / 2 - sr.top) / sr.height * 100;
   const kind = b.dataset.kind; b.remove(); fx('🫧', 'poof', x, y); SFX.pop();
-  if (kind !== 'water') { say('هذه صابونة للاستحمام. اختر الرشاش 🚿'); return; }
+  if (kind !== 'water') { say('هذه صابونة للاستحمام. اختر الدورق'); return; }
   const i = S.plots.findIndex(p => p.s === 1);
   if (i < 0) { say('لا توجد بذرة تحتاج إلى سقي.'); return; }
   water(i);
@@ -367,7 +370,7 @@ function popBubble(b) {
 function water(i) {
   const p = S.plots[i], w = document.createElement('div');
   w.className = 'water'; w.style.left = PLOT_X[i] + '%'; w.style.top = '66%';
-  w.innerHTML = '<span>🚿</span><b style="left:-4px">💧</b><b style="left:12px;animation-delay:.15s">💧</b><b style="left:28px;animation-delay:.3s">💧</b>';
+  w.innerHTML = `<span>${CAN}</span>` + '<b style="left:-4px">💧</b><b style="left:12px;animation-delay:.15s">💧</b><b style="left:28px;animation-delay:.3s">💧</b>';
   $('#fx').appendChild(w); setTimeout(() => w.remove(), 1500);
   SFX.water(); p.s = 2; p.t = Date.now() + GROW_MS;
   if (!needWater()) $('#bubbles').innerHTML = '';
@@ -387,7 +390,7 @@ function plantSeed() {
 function plotAction(i) {
   const p = S.plots[i];
   if (p.s === 0) { plantSeed(); return; }
-  if (p.s === 1) { say('تحتاج ماء. اضغط على الرشاش 🚿 داخل الفقاعات.'); ensureBubbles(); return; }
+  if (p.s === 1) { say('تحتاج ماء. اضغط على الدورق داخل الفقاعات.'); ensureBubbles(); return; }
   if (p.s === 2) { say('ما زالت تنمو.'); return; }
   p.s = 0; S.veg += APPLES_PER_TREE; SFX.harvest(); fx('✨', 'poof', PLOT_X[i], 70);
   for (let n = 0; n < APPLES_PER_TREE; n++) setTimeout(() => fx(APPLE, 'apple-up', PLOT_X[i] + (n - 1) * 7, 66), n * 140);
