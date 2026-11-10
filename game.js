@@ -530,16 +530,24 @@ addEventListener('pointerup', endPan); addEventListener('pointercancel', endPan)
 // بعد السحب لا نحسبها ضغطة (لا مشي ولا قفز)
 stageEl.addEventListener('click', e => { if (dragged) { e.stopPropagation(); dragged = false; } }, true);
 
-// في الحمام: يمشي النمر إلى أي مكان يضغط عليه اللاعب
-let walkTimer;
+// في الحمام: النمر ثابت في مكانه والخلفية هي التي تتحرك: عند الضغط على أي مكان يمشي النمر (في مكانه) وتنزلق الخلفية نحو ذلك الاتجاه
+let walkTimer, bgAnim;
 $('#stage').addEventListener('click', e => {
   if (mode !== 'bath' || S.sleeping || e.target.closest('#tiger, button')) return;
-  const r = $('#layer').getBoundingClientRect(), a = $('#actor');
-  const half = a.offsetWidth / 2 / r.width * 100;
-  const x = Math.max(half, Math.min(100 - half, (e.clientX - r.left) / r.width * 100));
-  const y = Math.max(-3, Math.min(22, (1 - (e.clientY - r.top) / r.height) * 100 - 6));
-  a.style.left = x.toFixed(1) + '%'; a.style.bottom = y.toFixed(1) + '%';
-  a.classList.add('walk', 'go'); clearTimeout(walkTimer); walkTimer = setTimeout(() => a.classList.remove('walk', 'go'), 520);
+  const a = $('#actor'), ar = a.getBoundingClientRect();
+  const W = stageEl.clientWidth, H = stageEl.clientHeight, range = Math.max(1, Math.max(W * 1.5, H * 1.18) - W);
+  const dxPx = e.clientX - (ar.left + ar.width / 2);
+  const from = bx, to = Math.max(0, Math.min(100, from + dxPx / range * 100));
+  if (Math.abs(to - from) < 0.2) return; // وصلت الخلفية لحدّها: لا مكان آخر للمشي نحوه
+  const dur = Math.min(1100, 350 + Math.abs(dxPx) * 1.5), t0 = performance.now();
+  a.classList.add('walk', 'go'); clearTimeout(walkTimer); cancelAnimationFrame(bgAnim);
+  const step = now => {
+    const k = Math.min(1, (now - t0) / dur), ease = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+    bx = from + (to - from) * ease; stageEl.style.setProperty('--bx', bx.toFixed(1) + '%');
+    if (k < 1) bgAnim = requestAnimationFrame(step);
+  };
+  bgAnim = requestAnimationFrame(step);
+  walkTimer = setTimeout(() => a.classList.remove('walk', 'go'), dur);
 });
 // القفز فقط عند الضغط على البطن
 $('#tiger').addEventListener('click', e => {
