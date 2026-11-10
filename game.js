@@ -15,6 +15,12 @@ S.brush = S.brush ?? 0; S.routine = S.routine ?? null;
 const routineBusy = () => S.routine === 'soap' || S.routine === 'rinse' || S.routine === 'brush';
 let mode = S.sleeping ? 'sleep' : 'eat';
 const GROW_MS = 15000;
+const APPLES_PER_TREE = 3; // كم تفاحة تعطي الشجرة عند القطف
+// صور مراحل نمو التفاحة (مجلد apple): بذرة ← فسيلة ← نبتة ← شجرة مزهرة ← شجرة مثمرة
+const pic = n => `<img class="ico" src="apple/${n}.png" alt="" draggable="false">`;
+const APPLE = pic('apple'), SEED = pic('seed');
+const STAGES = ['', 'seed', 'sprout', 'tree'];                    // بحسب حالة الحفرة s
+const growStage = prog => prog < 1 / 3 ? 'sprout' : prog < 2 / 3 ? 'plant' : 'blossom'; // أثناء النمو (s = 2)
 
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
 const room = () => clamp(100 - S.dirt.length * 12);
@@ -30,22 +36,22 @@ function task() {
   if (mode !== 'bath' && S.toilet >= 80) return ['🚽', 'النمر يريد المرحاض'];
   if (S.wakeBath && S.hygiene < 100 && mode !== 'bath') return ['🛁', 'النمر يريد الاستحمام'];
   if (mode === 'farm') {
-    if (S.plots.some(p => p.s === 3)) return ['🥕', 'احصد الجزر'];
+    if (S.plots.some(p => p.s === 3)) return [APPLE, 'اقطف التفاح'];
     if (needWater()) return ['🚿', 'اسقِ البذرة'];
     if (S.plots.some(p => p.s === 2)) return ['⏳', 'انتظر النبتة تنمو'];
-    return ['🌰', 'ازرع البذرة'];
+    return [SEED, 'ازرع البذرة'];
   }
   if (mode === 'eat') {
     if (routineBusy()) return ['🛁', 'اغسله أولًا في الحمام'];
     if (S.veg < 1) return ['🌱', 'اذهب إلى المزرعة'];
-    return S.hunger >= 100 ? ['😋', 'شبع النمر'] : ['🥕', 'أطعمه جزرة'];
+    return S.hunger >= 100 ? ['😋', 'شبع النمر'] : [APPLE, 'أطعمه تفاحة'];
   }
   if (mode === 'bath') {
     if (S.toilet >= 70) return ['🚽', 'النمر يحتاج المرحاض'];
     if (S.routine === 'soap') return ['🧼', 'افرك بالصابون'];
     if (S.routine === 'rinse') return ['🚿', 'اشطفه بالماء'];
     if (S.routine === 'brush') return ['🪥', 'نظّف أسنانه بالفرشاة'];
-    if (S.routine === 'food') return ['🥕', 'حان وقت الطعام'];
+    if (S.routine === 'food') return [APPLE, 'حان وقت الطعام'];
     if (S.hygiene >= 100 && S.lather <= 0) return ['✨', 'النمر نظيف'];
     return S.lather >= 50 ? ['🚿', 'اشطفه بالماء'] : ['🧼', 'افرك بالصابون'];
   }
@@ -55,7 +61,7 @@ function task() {
 }
 function think() {
   const el = $('#think'), t = task();
-  if (t) { if (el.textContent !== t[0]) el.textContent = t[0]; el.setAttribute('aria-label', t[1]); }
+  if (t) { if (el.dataset.k !== t[0]) { el.dataset.k = t[0]; el.innerHTML = t[0]; } el.setAttribute('aria-label', t[1]); }
   el.hidden = !t;
 }
 function anim(c) {
@@ -66,7 +72,7 @@ function anim(c) {
 const hop = () => anim('hop');
 function fx(txt, cls, x, y) {
   const e = document.createElement('div');
-  e.className = cls; e.textContent = txt;
+  e.className = cls; e.innerHTML = txt;
   if (x != null) { e.style.left = x + '%'; e.style.top = y + '%'; }
   $('#fx').appendChild(e); setTimeout(() => e.remove(), 1300);
 }
@@ -218,18 +224,18 @@ function render() {
     paintPlots();
     const b = document.createElement('button');
     b.className = 'act seed'; b.disabled = !S.plots.some(p => p.s === 0);
-    setAct(b, '🌰', 'بذرة');
+    setAct(b, SEED, 'بذرة');
     b.onclick = () => plantSeed();
     panel.appendChild(b);
     const c = document.createElement('p');
-    c.className = 'hint'; c.textContent = `🥕 ${S.veg}`;
+    c.className = 'hint'; c.innerHTML = `${APPLE} ${S.veg}`;
     panel.appendChild(c);
     ensureBubbles();
   }
   if (mode === 'eat') {
     const b = document.createElement('button');
     b.className = 'act'; b.disabled = S.veg < 1 || routineBusy();
-    setAct(b, '🥕', `أطعمه جزرة (عندك ${S.veg})`);
+    setAct(b, APPLE, `أطعمه تفاحة (عندك ${S.veg})`);
     b.onclick = feed; panel.appendChild(b);
   }
   if (mode === 'bath') {
@@ -281,15 +287,15 @@ function render() {
 }
 
 // ---------- المزرعة ----------
-// حالة الحفرة: 0 فارغة، 1 بذرة على الأرض تحتاج ماء، 2 نبتة تنمو، 3 جزرة جاهزة
-const PLOT_X = [11, 26, 41]; // موضع الحفر على الأرض (% من عرض المشهد)
+// حالة الحفرة: 0 فارغة، 1 بذرة على الأرض تحتاج ماء، 2 تنمو (فسيلة ثم نبتة ثم شجرة مزهرة)، 3 شجرة تفاح جاهزة للقطف
+const PLOT_X = [9.5, 24, 38.5]; // موضع الحفر على الأرض (% من عرض المشهد)
 const needWater = () => S.plots.some(p => p.s === 1);
 
 function farmHint() {
-  if (S.plots.some(p => p.s === 3)) return 'الجزر جاهز! المس الجزرة لتحصدها.';
+  if (S.plots.some(p => p.s === 3)) return 'التفاح جاهز! المس الشجرة لتقطف التفاح.';
   if (needWater()) return 'اضغط على الرشاش 🚿 داخل الفقاعات لتسقي البذرة.';
-  if (S.plots.some(p => p.s === 2)) return 'النبتة تنمو… انتظر قليلًا.';
-  return 'اضغط على البذرة 🌰 لتزرعها في الأرض.';
+  if (S.plots.some(p => p.s === 2)) return 'الشجرة تنمو… انتظر قليلًا.';
+  return 'اضغط على البذرة لتزرعها في الأرض.';
 }
 
 function paintPlots() {
@@ -307,10 +313,17 @@ function paintPlots() {
     const em = el.children[0], lab = el.children[2];
     const ms = Math.max(0, p.t - Date.now());
     const prog = p.s === 2 ? 1 - ms / GROW_MS : 0;
-    em.textContent = ['', '🌰', prog < 0.5 ? '🌱' : '🌿', '🥕'][p.s];
-    em.style.fontSize = ['1.5rem', '1.5rem', (1.9 + prog * 0.8).toFixed(2) + 'rem', '2.7rem'][p.s];
-    lab.textContent = ['', 'تحتاج ماء', Math.ceil(ms / 1000) + 'ث', 'احصد!'][p.s];
-    el.setAttribute('aria-label', ['حفرة فارغة', 'بذرة تحتاج ماء', 'نبتة تنمو', 'جزرة جاهزة للحصاد'][p.s]);
+    const k = p.s === 2 ? growStage(prog) : STAGES[p.s]; // اسم الصورة المعروضة الآن
+    if (k) {
+      let img = em.firstChild;
+      if (!img) { img = document.createElement('img'); img.alt = ''; img.draggable = false; em.appendChild(img); }
+      if (em.dataset.k !== k) { // تغيّرت المرحلة: صورة جديدة بقفزة نمو صغيرة
+        em.dataset.k = k; img.src = `apple/${k}.png`;
+        if (!isNew) { img.classList.remove('grow'); void img.offsetWidth; img.classList.add('grow'); }
+      }
+    } else { em.replaceChildren(); delete em.dataset.k; }
+    lab.textContent = ['', 'تحتاج ماء', Math.ceil(ms / 1000) + 'ث', 'اقطف!'][p.s];
+    el.setAttribute('aria-label', ['حفرة فارغة', 'بذرة تحتاج ماء', 'شجرة تنمو', 'شجرة تفاح جاهزة للقطف'][p.s]);
     if (el.dataset.s !== String(p.s)) {
       el.dataset.s = p.s; em.className = ''; void em.offsetWidth;
       if (!isNew) em.className = ['', 'seed', 'sprout', 'ripe'][p.s];
@@ -357,13 +370,13 @@ function water(i) {
   $('#fx').appendChild(w); setTimeout(() => w.remove(), 1500);
   SFX.water(); p.s = 2; p.t = Date.now() + GROW_MS;
   if (!needWater()) $('#bubbles').innerHTML = '';
-  say('سقيت البذرة فصارت نبتة! انتظر لتنمو.'); praise();
+  say('سقيت البذرة فنبتت! انتظر لتكبر.'); praise();
   save(); render();
 }
 
 function plantSeed() {
   const i = S.plots.findIndex(p => p.s === 0);
-  if (i < 0) { say('كل الأرض مزروعة. اسقِ البذور أو احصد الجزر.'); SFX.no(); return; }
+  if (i < 0) { say('كل الأرض مزروعة. اسقِ البذور أو اقطف التفاح.'); SFX.no(); return; }
   S.plots[i] = { s: 1, t: 0 }; SFX.seed();
   say('وقعت البذرة على الأرض.'); praise();
   save(); render();
@@ -375,8 +388,9 @@ function plotAction(i) {
   if (p.s === 0) { plantSeed(); return; }
   if (p.s === 1) { say('تحتاج ماء. اضغط على الرشاش 🚿 داخل الفقاعات.'); ensureBubbles(); return; }
   if (p.s === 2) { say('ما زالت تنمو.'); return; }
-  p.s = 0; S.veg++; SFX.harvest(); fx('✨', 'poof', PLOT_X[i], 78);
-  say('حصدت جزرة!'); praise(); save(); render();
+  p.s = 0; S.veg += APPLES_PER_TREE; SFX.harvest(); fx('✨', 'poof', PLOT_X[i], 70);
+  for (let n = 0; n < APPLES_PER_TREE; n++) setTimeout(() => fx(APPLE, 'apple-up', PLOT_X[i] + (n - 1) * 7, 66), n * 140);
+  say('قطفت التفاح من الشجرة!'); praise(); save(); render();
 }
 
 function feed() {
@@ -385,7 +399,7 @@ function feed() {
   S.routine = null;
   S.veg--; S.hunger = clamp(S.hunger + 30); S.sleepReady = false;
   setTimeout(() => { S.toilet = Math.max(S.toilet, 85); save(); think(); }, 2300); // يحتاج المرحاض بعد الأكل
-  fx('🥕', 'fly'); eat();
+  fx(APPLE, 'fly'); eat();
   say(S.hunger >= 100 ? 'شبع النمر تمامًا!' : 'ممم، لذيذة!'); setTimeout(praise, 700);
   save(); paintStats(); render();
 }
@@ -423,7 +437,7 @@ function brushUp() {
   SFX.scrub(); anim('wiggle'); foam('✨', 4, 25);
   if (S.routine === 'brush' && S.brush >= 50) {
     S.routine = 'food'; S.brush = 0; S.hygiene = clamp(S.hygiene + 5);
-    setTimeout(praise, 500); say('أسنانه نظيفة! حان وقت الطعام 🥕');
+    setTimeout(praise, 500); say('أسنانه نظيفة! حان وقت الطعام 🍎');
   } else if (S.routine === 'brush') say('استمر في الفرك.');
   else { S.brush = 0; say('أسنان النمر نظيفة.'); }
   save(); paintStats(); think();

@@ -154,15 +154,28 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 .actor{transition:left .5s ease,bottom .5s ease}
 .spot{position:absolute;top:93%;transform:translate(-50%,-100%);width:54px;border:0;background:none;padding:0;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;font-family:inherit}
-.spot em{font-style:normal;line-height:1;height:3rem;display:flex;align-items:flex-end;font-size:1.5rem;margin-bottom:-9px;
-  position:relative;z-index:1;transform-origin:50% 100%;transition:font-size 1s linear}
+.spot em{font-style:normal;line-height:1;min-height:3rem;display:flex;align-items:flex-end;justify-content:center;margin-bottom:-9px;
+  position:relative;z-index:1;transform-origin:50% 100%}
+.spot em img{display:block;flex:none;width:auto;max-width:none;transform-origin:50% 100%;pointer-events:none;-webkit-user-drag:none;
+  filter:drop-shadow(0 2px 1px rgba(0,0,0,.22))}
+.spot em[data-k=seed] img{height:20px}
+.spot em[data-k=sprout] img{height:34px}
+.spot em[data-k=plant] img{height:48px}
+.spot em[data-k=blossom] img{height:62px}
+.spot em[data-k=tree] img{height:70px}
+.spot em img.grow{animation:sprout .5s ease-out}
 .spot .mound{display:block;width:46px;height:14px;border-radius:50%;background:radial-gradient(#6b4226,#4a2d17);box-shadow:0 2px 0 rgba(0,0,0,.22)}
 .spot small{font-size:.72rem;font-weight:700;color:#fff;min-height:1.1em;margin-top:2px;text-shadow:0 1px 2px rgba(0,0,0,.7)}
 .spot em.seed{animation:seedDrop .6s ease-in}
 .spot em.sprout{animation:sprout .5s ease-out}
 .spot em.ripe{animation:ripe 1.2s ease-in-out infinite}
 @keyframes seedDrop{from{transform:translateY(-150px);opacity:0}30%{opacity:1}75%{transform:translateY(0)}88%{transform:translateY(-8px)}to{transform:translateY(0)}}
-@keyframes ripe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-5px) scale(1.1)}}
+@keyframes ripe{0%,100%{transform:rotate(-1.6deg)}50%{transform:rotate(1.6deg)}}
+.ico{display:inline-block;height:1em;width:auto;vertical-align:-.12em;pointer-events:none;-webkit-user-drag:none}
+.act em .ico,.think .ico,.nav button .ico,.fly .ico{display:block;vertical-align:baseline}
+.panel .hint .ico{height:1.35em;vertical-align:-.3em}
+.apple-up{position:absolute;font-size:1.8rem;line-height:1;animation:appleUp 1.2s ease-out forwards}
+@keyframes appleUp{from{opacity:1;transform:translate(-50%,0) scale(.7)}60%{opacity:1}to{opacity:0;transform:translate(-50%,-110px) scale(1.15)}}
 .act.seed{display:flex;align-items:center;gap:8px;font-size:1.15rem}
 .act.seed em{font-style:normal;font-size:1.7rem}
 
