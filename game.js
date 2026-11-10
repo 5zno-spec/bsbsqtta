@@ -22,6 +22,7 @@ const APPLE = pic('apple'), SEED = pic('seed');
 // صور الأدوات (مجلد items): الدش للحمام، الدورق لسقي الزرع، والعلبة والمنديل من قمامة البيت
 const item = n => `<img class="ico" src="items/${n}.png" alt="" draggable="false">`;
 const SHOWER = item('shower'), CAN = item('can'), TISSUE = item('tissue'), JUICE = item('juice');
+const PAPER = item('paper'), GLASS = item('glass');
 const STAGES = ['', 'seed', 'sprout', 'tree'];                    // بحسب حالة الحفرة s
 const growStage = prog => prog < 1 / 3 ? 'sprout' : prog < 2 / 3 ? 'plant' : 'blossom'; // أثناء النمو (s = 2)
 
@@ -101,8 +102,7 @@ function hearts(n = 3) {
   for (let i = 0; i < n; i++) setTimeout(() => fx('❤️', 'heart', 38 + Math.random() * 24, 22 + Math.random() * 12), i * 120);
 }
 // ---------- القمامة والسلة ----------
-const BOTTLE = '<svg viewBox="0 0 40 52" aria-hidden="true"><path d="M12 24 L14 14 L17 18 L19 9 L22 17 L25 11 L28 22 L30 24 L30 46 Q30 50 26 50 L16 50 Q12 50 12 46 Z" fill="#4caf6a" stroke="#1f5a34" stroke-width="2" stroke-linejoin="round"/><path d="M16 28 V44" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".55"/><path d="M22 30 L19 36 L23 40 L20 47" fill="none" stroke="#e9fff0" stroke-width="1.8" stroke-linejoin="round"/><path d="M33 46 L37 42 L38 48 Z" fill="#4caf6a" stroke="#1f5a34" stroke-width="1.5" stroke-linejoin="round"/></svg>';
-const JUNK = [TISSUE, JUICE, '📜', BOTTLE];
+const JUNK = [TISSUE, JUICE, PAPER, GLASS];
 const JUNK_NAMES = ['منديل', 'علبة عصير', 'ورقة قديمة', 'زجاجة مكسورة'];
 const junk = k => JUNK[k % JUNK.length];
 const BIN = '<svg viewBox="0 0 64 76" aria-hidden="true"><g class="lid"><rect x="6" y="8" width="52" height="8" rx="4" fill="#7d909a" stroke="#4d5c64" stroke-width="2"/><rect x="24" y="2" width="16" height="8" rx="3" fill="#7d909a" stroke="#4d5c64" stroke-width="2"/></g><path d="M10 20 H54 L50 70 Q50 74 46 74 H18 Q14 74 14 70 Z" fill="#9fb2ba" stroke="#4d5c64" stroke-width="2" stroke-linejoin="round"/><path d="M24 28 V66 M32 28 V66 M40 28 V66" stroke="#4d5c64" stroke-width="2.5" stroke-linecap="round" opacity=".55"/></svg>';
