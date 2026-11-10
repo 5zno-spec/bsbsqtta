@@ -347,3 +347,12 @@ button:focus-visible{outline:3px solid var(--ink); outline-offset:2px}
 /* أيقونة الصنبور: في منتصف الزر تمامًا وأكبر قليلًا */
 .act em{display:flex;align-items:center;justify-content:center}
 .act em .ico[src$="faucet.png"]{height:1.25em;margin:0 auto}
+
+/* يد بإصبع تشير إلى المطلوب بعد ٧ ثوان بلا استجابة */
+.hand{position:fixed; left:0; top:0; width:0; display:flex; justify-content:center; z-index:70; pointer-events:none; font-size:2.8rem; line-height:1; will-change:transform; filter:drop-shadow(0 3px 4px rgba(0,0,0,.4))}
+.hand[hidden]{display:none}
+.hand span{display:block; flex:none; animation:handTap .9s ease-in-out infinite}
+.hand.down span{animation-name:handTapDown}
+@keyframes handTap{0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-12px) scale(.94)}}
+@keyframes handTapDown{0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(12px) scale(.94)}}
+@media (prefers-reduced-motion:reduce){.hand span{animation:none}}

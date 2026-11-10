@@ -51,39 +51,41 @@ function wakeUp() { S.wakeBath = S.hygiene < 100; S.toilet = 100; S.sleepReady =
 function say(t) { $('#msg').textContent = t; }
 
 // المهمة المطلوبة من اللاعب الآن: صورة فقط في فقاعة تفكير فوق رأس النمر
+// العنصر الثالث في كل مهمة: محدّد CSS للعنصر المطلوب الضغط عليه (تشير إليه اليد إن تأخر اللاعب)، أو null إن لم يكن هناك ما يُضغط
+const NAV = m => `.nav button[data-mode="${m}"]`, ACT = k => `.act[data-act="${k}"]`;
 function task() {
   if (S.sleeping) return null;
   const st = step();
   // النوم: يحتاج المرحاض أولًا (في أي شاشة)، ثم إطفاء الضوء في غرفة النوم
   if (st === 'sleep') {
-    if (!S.sleepReady) return ['🚽', 'يحتاج المرحاض قبل النوم'];
-    return mode === 'sleep' ? ['🌙', 'أطفئ الضوء لينام'] : ['🌙', 'حان وقت النوم'];
+    if (!S.sleepReady) return ['🚽', 'يحتاج المرحاض قبل النوم', mode === 'bath' ? ACT('toilet') : NAV('bath')];
+    return mode === 'sleep' ? ['🌙', 'أطفئ الضوء لينام', ACT('sleep')] : ['🌙', 'حان وقت النوم', NAV('sleep')];
   }
   // الطعام بلا تفاح: المطلوب المزرعة (زرع ثم سقي ثم قطف) قبل الأكل
   const noApple = st === 'food' && S.veg < 1;
   const here = noApple ? 'farm' : { bath: 'bath', food: 'eat', clean: 'clean', farm: 'farm' }[st];
   if (mode !== here) { // النمر ليس في مكان الخطوة: يفكّر في الخطوة التالية بدل تكرار ما انتهى
-    if (st === 'bath') return ['🛁', 'حان وقت الحمام'];
-    if (noApple) return ['🌱', 'اذهب إلى المزرعة'];
-    if (st === 'food') return [APPLE, 'حان وقت الطعام'];
-    if (st === 'clean') return ['🗑️', 'حان وقت التنظيف'];
-    return [SEED, 'حان وقت الزرع'];
+    if (st === 'bath') return ['🛁', 'حان وقت الحمام', NAV('bath')];
+    if (noApple) return ['🌱', 'اذهب إلى المزرعة', NAV('farm')];
+    if (st === 'food') return [APPLE, 'حان وقت الطعام', NAV('eat')];
+    if (st === 'clean') return ['🗑️', 'حان وقت التنظيف', NAV('clean')];
+    return [SEED, 'حان وقت الزرع', NAV('farm')];
   }
   if (mode === 'farm') {
-    if (S.plots.some(p => p.s === 3)) return [APPLE, 'اقطف التفاح'];
-    if (needWater()) return [CAN, 'اسقِ البذرة'];
-    if (S.plots.some(p => p.s === 2)) return ['⏳', 'انتظر النبتة تنمو'];
-    return [SEED, 'ازرع البذرة'];
+    if (S.plots.some(p => p.s === 3)) return [APPLE, 'اقطف التفاح', '#plots .spot[data-s="3"]'];
+    if (needWater()) return [CAN, 'اسقِ البذرة', '#bubbles .bubble[data-kind="water"]'];
+    if (S.plots.some(p => p.s === 2)) return ['⏳', 'انتظر النبتة تنمو', null];
+    return [SEED, 'ازرع البذرة', ACT('seed')];
   }
-  if (mode === 'eat') return [APPLE, 'أطعمه تفاحة'];
+  if (mode === 'eat') return [APPLE, 'أطعمه تفاحة', ACT('feed')];
   if (mode === 'bath') {
-    if (S.routine === 'soap') return ['🧼', 'افرك بالصابون'];
-    if (S.routine === 'rinse') return [FAUCET, 'اشطفه بالماء'];
-    if (S.routine === 'brush') return ['🪥', 'نظّف أسنانه بالفرشاة'];
-    if (needShower()) return [SHOWER, 'خذ دشًا بعد العمل'];
-    return ['🚽', 'ابدأ بالمرحاض'];
+    if (S.routine === 'soap') return ['🧼', 'افرك بالصابون', ACT('soap')];
+    if (S.routine === 'rinse') return [FAUCET, 'اشطفه بالماء', ACT('rinse')];
+    if (S.routine === 'brush') return ['🪥', 'نظّف أسنانه بالفرشاة', ACT('brush')];
+    if (needShower()) return [SHOWER, 'خذ دشًا بعد العمل', ACT('shower')];
+    return ['🚽', 'ابدأ بالمرحاض', ACT('toilet')];
   }
-  return S.dirt.length ? ['🗑️', 'ارمِ القمامة في السلة'] : ['✨', 'البيت نظيف'];
+  return S.dirt.length ? ['🗑️', 'ارمِ القمامة في السلة', '#layer .dirt'] : ['✨', 'البيت نظيف', null];
 }
 function think() {
   const el = $('#think'), t = task();
@@ -246,7 +248,7 @@ function render() {
   if (mode === 'farm') {
     paintPlots();
     const b = document.createElement('button');
-    b.className = 'act seed'; b.disabled = !S.plots.some(p => p.s === 0);
+    b.className = 'act seed'; b.dataset.act = 'seed'; b.disabled = !S.plots.some(p => p.s === 0);
     setAct(b, SEED, 'بذرة');
     b.onclick = () => plantSeed();
     panel.appendChild(b);
@@ -257,14 +259,14 @@ function render() {
   }
   if (mode === 'eat') {
     const b = document.createElement('button');
-    b.className = 'act'; b.disabled = S.veg < 1 || routineBusy();
+    b.className = 'act'; b.dataset.act = 'feed'; b.disabled = S.veg < 1 || routineBusy();
     setAct(b, APPLE, `أطعمه تفاحة (عندك ${S.veg})`);
     b.onclick = feed; panel.appendChild(b);
   }
   if (mode === 'bath') {
-    [['🚽', 'المرحاض', toilet], ['🧼', 'استحمام بالصابون', soap], [FAUCET, 'غسل بالماء', rinse], ['🪥', 'غسل بالفرشاة', brushUp]].concat(needShower() ? [[SHOWER, 'دش للاستحمام', takeShower]] : []).forEach(([ic, lb, fn]) => {
+    [['🚽', 'المرحاض', toilet, 'toilet'], ['🧼', 'استحمام بالصابون', soap, 'soap'], [FAUCET, 'غسل بالماء', rinse, 'rinse'], ['🪥', 'غسل بالفرشاة', brushUp, 'brush']].concat(needShower() ? [[SHOWER, 'دش للاستحمام', takeShower, 'shower']] : []).forEach(([ic, lb, fn, key]) => {
       const b = document.createElement('button');
-      b.className = 'act'; setAct(b, ic, lb); b.onclick = fn; panel.appendChild(b);
+      b.className = 'act'; b.dataset.act = key; setAct(b, ic, lb); b.onclick = fn; panel.appendChild(b);
     });
   }
   if (mode === 'clean') {
@@ -289,7 +291,7 @@ function render() {
   }
   if (mode === 'sleep') {
     const b = document.createElement('button');
-    b.className = 'act';
+    b.className = 'act'; b.dataset.act = 'sleep';
     setAct(b, S.sleeping ? '☀️' : '🌙', S.sleeping ? 'أيقظه' : 'أطفئ الضوء ونام');
     b.onclick = () => {
       if (!S.sleeping && !S.sleepReady) {
@@ -581,6 +583,40 @@ const sndBtn = $('#snd');
 const paintSnd = () => { sndBtn.textContent = SFX.on ? '🔊' : '🔇'; sndBtn.setAttribute('aria-pressed', SFX.on); sndBtn.setAttribute('aria-label', SFX.on ? 'إيقاف الصوت' : 'تشغيل الصوت'); };
 sndBtn.onclick = () => { SFX.set(!SFX.on); paintSnd(); };
 paintSnd();
+// ---------- يد تشير إلى المطلوب ----------
+// إن لم يستجب اللاعب لمهمة النمر ٧ ثوان تظهر يد بإصبع تشير إلى الزر أو العنصر المطلوب، وتختفي عند أي استجابة
+const HINT_MS = 7000;
+let hintSince = Date.now(), hintKey = '', handSel = '', handRaf = 0;
+const handEl = document.createElement('div'), handIc = document.createElement('span');
+handEl.id = 'hand'; handEl.className = 'hand'; handEl.hidden = true; handEl.appendChild(handIc); document.body.appendChild(handEl);
+function hideHand() { handSel = ''; handEl.hidden = true; if (handRaf) cancelAnimationFrame(handRaf); handRaf = 0; }
+function placeHand() {
+  const el = handSel && document.querySelector(handSel), r = el && el.getBoundingClientRect();
+  if (!r || !r.width || r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) handEl.style.visibility = 'hidden';
+  else {
+    const down = r.top + r.height / 2 > innerHeight * 0.55; // العنصر في النصف السفلي: اليد فوقه وإصبعها إلى الأسفل
+    if (handEl.dataset.d !== String(down)) { handEl.dataset.d = String(down); handEl.classList.toggle('down', down); handIc.textContent = down ? '👇' : '👆'; }
+    const x = r.left + r.width / 2, y = down ? r.top + r.height * 0.42 - 44 : r.top + r.height * 0.58;
+    handEl.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`; handEl.style.visibility = 'visible';
+  }
+  handRaf = requestAnimationFrame(placeHand);
+}
+function showHand(sel) {
+  handSel = sel; handEl.hidden = false;
+  if (!handRaf) handRaf = requestAnimationFrame(placeHand);
+}
+function hintCheck() {
+  const ins = $('#install'), t = S.sleeping || showering || (ins && !ins.hidden) ? null : task();
+  const key = t ? t[0] + '|' + t[1] : '';
+  if (key !== hintKey) { hintKey = key; hintSince = Date.now(); hideHand(); return; } // مهمة جديدة: تبدأ المهلة من جديد
+  if (t && t[2] && Date.now() - hintSince >= HINT_MS) showHand(t[2]); else hideHand();
+}
+setInterval(hintCheck, 300);
+// الاستجابة = الضغط على زر أو عنصر من عناصر المهام (لا اللعب بالنمر): تُعاد المهلة وتختفي اليد
+document.addEventListener('pointerdown', e => {
+  if (e.target.closest && e.target.closest('.nav button, .act, .spot, .bubble, .dirt')) { hintSince = Date.now(); hideHand(); }
+}, true);
+
 layoutDirt();
 setMode(mode);
 paintStats();
