@@ -606,7 +606,7 @@ function showHand(sel) {
   if (!handRaf) handRaf = requestAnimationFrame(placeHand);
 }
 function hintCheck() {
-  const ins = $('#install'), t = S.sleeping || showering || (ins && !ins.hidden) ? null : task();
+  const ins = $('#install'), t = S.sleeping || showering || $('#splash') || (ins && !ins.hidden) ? null : task();
   const key = t ? t[0] + '|' + t[1] : '';
   if (key !== hintKey) { hintKey = key; hintSince = Date.now(); hideHand(); return; } // مهمة جديدة: تبدأ المهلة من جديد
   if (t && t[2] && Date.now() - hintSince >= HINT_MS) showHand(t[2]); else hideHand();
@@ -616,6 +616,20 @@ setInterval(hintCheck, 300);
 document.addEventListener('pointerdown', e => {
   if (e.target.closest && e.target.closest('.nav button, .act, .spot, .bubble, .dirt')) { hintSince = Date.now(); hideHand(); }
 }, true);
+
+// الواجهة الرئيسية: تُزال بعد اكتمال شريط التقدم (5 ثوان) مع مهلة احتياطية، ثم تبدأ مهلة اليد من جديد
+(() => {
+  const sp = $('#splash'), bar = sp && sp.querySelector('.splash-bar b');
+  if (!sp) return;
+  let gone = false;
+  const close = () => {
+    if (gone) return; gone = true;
+    sp.classList.add('out');
+    setTimeout(() => { sp.remove(); hintSince = Date.now(); }, 480);
+  };
+  if (bar) bar.addEventListener('animationend', close);
+  setTimeout(close, 5800);
+})();
 
 layoutDirt();
 setMode(mode);
