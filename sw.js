@@ -1,8 +1,8 @@
 // خدمة العمل بلا إنترنت: تخزّن ملفات اللعبة وتفتحها من الذاكرة
 // عند تعديل أي ملف ارفع رقم الإصدار هنا ليصل التحديث للاعبين
-const VERSION = 'v21';
+const VERSION = 'v22';
 const CACHE = 'nomor-alnashit-' + VERSION;
-const FONTS = 'nomor-alnashit-fonts';
+const FONTS = 'nomor-alnashit-fonts-v2'; // v2: لا تُخزَّن ردود opaque (كانت تُحسب بميغابايتات من مساحة الجهاز)
 const CORE = [
   './', 'index.html', 'style.css', 'game.js', 'sound.js', 'install.js', 'manifest.webmanifest',
   'parts/base.png', 'parts/tail.png', 'parts/arm.png', 'parts/legL.png', 'parts/legR.png',
@@ -24,26 +24,33 @@ self.addEventListener('activate', e => {
   );
 });
 
+// الصور والخطوط ثابتة: تُقرأ من الذاكرة فقط ولا تُطلب من الإنترنت إلا إن لم تكن محفوظة
+// (تبديل صورة يحتاج رفع VERSION فيُعاد تنزيلها). ملفات الكود الصغيرة تتحدّث في الخلفية كما كانت
+const STATIC = /\.(png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf)$/i;
+
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
 
-  // الخط من Google: يُحفظ عند أول اتصال ويُستخدم بعدها بلا إنترنت
+  // الخط من Google: يُحفظ عند أول اتصال ويُستخدم بعدها من الذاكرة بلا طلبات جديدة
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
     e.respondWith(caches.open(FONTS).then(async c => {
       const hit = await c.match(req);
-      const net = fetch(req).then(r => { if (r.ok || r.type === 'opaque') c.put(req, r.clone()); return r; }).catch(() => hit);
-      return hit || net;
+      if (hit) return hit;
+      const r = await fetch(req);
+      if (r.ok) c.put(req, r.clone());
+      return r;
     }));
     return;
   }
 
   if (url.origin !== location.origin) return;
 
-  // ملفات اللعبة: من الذاكرة فورًا، وتتحدّث في الخلفية للزيارة التالية
   e.respondWith(caches.open(CACHE).then(async c => {
     const hit = await c.match(req, { ignoreSearch: true });
+    if (hit && STATIC.test(url.pathname)) return hit;
+    // ملفات الكود: من الذاكرة فورًا، وتتحدّث في الخلفية للزيارة التالية
     const net = fetch(req).then(r => { if (r.ok) c.put(req, r.clone()); return r; }).catch(() => null);
     if (hit) { e.waitUntil(net); return hit; }
     return (await net) || (req.mode === 'navigate' ? c.match('index.html') : Response.error());
