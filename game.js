@@ -517,11 +517,21 @@ function tick() {
   // خطوات تنتهي من تلقاء نفسها: البيت نظيف بلا قمامة، أو النمر شبعان
   if (!sl && step() === 'clean' && !S.dirt.length) done('clean');
   if (!sl && step() === 'food' && S.hunger >= 100) done('food');
-  if (mode === 'farm') { paintPlots(); ensureBubbles(); }
+  if (mode === 'farm' && !document.hidden) { paintPlots(); ensureBubbles(); }
 
-  save(); paintStats(); think();
-  if (redraw) render();
+  save();
+  if (document.hidden) { if (redraw) needRender = true; return; } // في الخلفية: يستمر منطق اللعبة كما هو بلا رسم
+  paintStats(); think();
+  if (redraw || needRender) { needRender = false; render(); }
 }
+let needRender = false;
+// عند العودة للعبة: تحديث الشاشة فورًا بما تغيّر أثناء الغياب
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { hideHand(); return; }
+  paintStats(); think();
+  if (needRender) { needRender = false; render(); }
+  hintSince = Date.now();
+});
 
 document.querySelectorAll('.nav button').forEach(b => {
   const s = b.querySelector('span'); b.dataset.label = s.textContent; b.setAttribute('aria-label', s.textContent);
@@ -589,9 +599,14 @@ const HINT_MS = 7000;
 let hintSince = Date.now(), hintKey = '', handSel = '', handRaf = 0;
 const handEl = document.createElement('div'), handIc = document.createElement('span');
 handEl.id = 'hand'; handEl.className = 'hand'; handEl.hidden = true; handEl.appendChild(handIc); document.body.appendChild(handEl);
-function hideHand() { handSel = ''; handEl.hidden = true; if (handRaf) cancelAnimationFrame(handRaf); handRaf = 0; }
+function hideHand() { handSel = ''; handTarget = null; handEl.hidden = true; if (handRaf) cancelAnimationFrame(handRaf); handRaf = 0; }
+// موضع اليد: يُحسب عند ظهورها ثم كل 0.3 ثانية مع hintCheck. يتابعها كل إطار فقط إن كان الهدف فقاعة تطفو، لتوفير البطارية
+let handTarget = null;
 function placeHand() {
-  const el = handSel && document.querySelector(handSel), r = el && el.getBoundingClientRect();
+  handRaf = 0;
+  if (!handSel) return;
+  if (!handTarget || !handTarget.isConnected || !handTarget.matches(handSel)) handTarget = document.querySelector(handSel);
+  const el = handTarget, r = el && el.getBoundingClientRect();
   if (!r || !r.width || r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) handEl.style.visibility = 'hidden';
   else {
     const down = r.top + r.height / 2 > innerHeight * 0.55; // العنصر في النصف السفلي: اليد فوقه وإصبعها إلى الأسفل
@@ -599,13 +614,15 @@ function placeHand() {
     const x = r.left + r.width / 2, y = down ? r.top + r.height * 0.42 - 44 : r.top + r.height * 0.58;
     handEl.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px)`; handEl.style.visibility = 'visible';
   }
-  handRaf = requestAnimationFrame(placeHand);
+  if (el && el.closest('.bubble')) handRaf = requestAnimationFrame(placeHand);
 }
 function showHand(sel) {
-  handSel = sel; handEl.hidden = false;
-  if (!handRaf) handRaf = requestAnimationFrame(placeHand);
+  if (sel !== handSel) { handSel = sel; handTarget = null; }
+  handEl.hidden = false;
+  if (!handRaf) placeHand();
 }
 function hintCheck() {
+  if (document.hidden) return; // اللعبة في الخلفية: لا داعي لحساب اليد
   const ins = $('#install'), t = S.sleeping || showering || $('#splash') || (ins && !ins.hidden) ? null : task();
   const key = t ? t[0] + '|' + t[1] : '';
   if (key !== hintKey) { hintKey = key; hintSince = Date.now(); hideHand(); return; } // مهمة جديدة: تبدأ المهلة من جديد
